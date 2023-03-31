@@ -1,0 +1,6 @@
+-- normal form              Y
+-- weak normal form         Y
+-- head normal form         Y
+-- weak head normal form    Y
+
+f (\x . x x) (\x . x x)

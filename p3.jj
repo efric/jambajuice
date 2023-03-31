@@ -1,0 +1,7 @@
+jambajuice {
+    if true {
+        print 68 // over 65 for ascii characters
+    } else {
+        print 70 // over 65 for ascii characters
+    }
+}

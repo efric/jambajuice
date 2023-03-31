@@ -1,0 +1,3 @@
+(\x . x three) (\y . plus y y)
+
+-- Should reduce to plus three three

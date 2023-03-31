@@ -1,0 +1,16 @@
+(\ true false and or not .
+
+    and true false
+
+    -- Should reduce to false, i.e., \ x y . y
+)
+-- true
+(\ x y . x)
+-- false
+(\ x y . y)
+-- and
+(\ p q . p q p)
+-- or
+(\ p q . p p q)
+-- not
+(\ p x y . p y x)

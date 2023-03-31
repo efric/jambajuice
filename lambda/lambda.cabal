@@ -1,0 +1,43 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           lambda
+version:        0.1.0.0
+author:         John Hui, Stephen Edwards
+maintainer:     sedwards@cs.columbia.edu
+copyright:      2023 John Hui and Stephen Edwards
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+
+library
+  exposed-modules:
+      AST
+      HW
+      Parse
+  other-modules:
+      Paths_lambda
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , megaparsec
+  default-language: Haskell2010
+
+executable plc
+  main-is: Main.hs
+  other-modules:
+      Paths_lambda
+  hs-source-dirs:
+      plc
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.7 && <5
+    , lambda
+  default-language: Haskell2010

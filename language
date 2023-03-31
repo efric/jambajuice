@@ -1,0 +1,82 @@
+types: int, bool, ->, ()
+(arrow takes two type arguments)
+
+built in functions:
+print : int -> int (implicit printing side effect)
+
+binary operators:
++ : int -> (int -> int)
+- : int -> int -> int
+
+unary operators
+! : bool -> bool
+
+control flow: 
+
+f {
+    5
+}
+
+bar a { : int -> (int -> int)
+    f
+}
+
+// if a function is immediately proceeded with {} it means it takes no arguments and is of type () -> something
+
+if <predicate> {
+    <thing>
+    1 + 2 + 3 // return 6
+    6         // return 6
+    (bar (5)) (foo (5, 6, 7)) // bar of 5 applied to foo of 5 6 7?
+    bar 5 foo 5 6 7 
+    (bar 5) (foo 5 6 7) 
+    bar arg0 arg1 {
+    }
+    2 + 3
+
+    let x = 5
+    let y = 6 in {
+        x + 6
+    }
+
+    let x = _
+    let y = _
+    let z = _ in {
+
+    }
+    
+} else {
+    <thing>
+}
+
+let x = 5 in x + x
+
+do
+  let x = 5
+  x + x
+
+let x = 5
+x + 5
+
+
+// single line comments
+
+*maybe support recursion
+
+f arg0 arg1 {
+    arg0 + arg1
+}
+
+jambajuice {
+
+}
+
+f arg0 arg1 = arg0 + arg1
+g arg0 arg1 = arg0 + id arg1
+id x = x
+
+f false 5 // not okay
+              
+
+f arg0 arg1 = x = 5 //
+              x + arg0 + arg1
