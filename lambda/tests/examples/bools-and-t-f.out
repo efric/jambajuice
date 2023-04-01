@@ -1,1 +1,0 @@
-(\true . \false . \and . \or . \not . and true false) (\x . \y . x) (\x . \y . y) (\p . \q . p q p) (\p . \q . p p q) (\p . \x . \y . p y x)

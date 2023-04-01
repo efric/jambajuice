@@ -91,4 +91,5 @@ pBrack = between (pToken "{") (pToken "}")
 pSpace :: Parser ()
 pSpace = label "whitespace" $ L.space
     space1
-    (L.skipLineComment "//")
+    (L.skipLineComment "--")
+    (L.skipBlockCommentNested "{-" "-}")

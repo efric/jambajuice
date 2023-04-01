@@ -1,3 +1,0 @@
-(\ x . \ y . x y ) y
-
--- Should reduce to \z . y z (for some fresh z)

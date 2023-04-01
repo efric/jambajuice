@@ -1,3 +1,0 @@
-(\x y. plus (plus x y) x) one two
-
--- Should reduce to plus (plus one two) one

@@ -92,7 +92,7 @@ Check() {
     diff="out/${basename}.diff"
     NoteGen "${result} ${diff}"
     
-    Run $PLC "<" "$1" ">" "${result}" &&
+    Run $PLC "$1" ">" "${result}" &&
     Compare "${result}" "${reference}" "${diff}"
 
     if [ -z "$error" ] ; then
@@ -123,7 +123,7 @@ CheckFail() {
 
     # Run the parser
 
-    parsed="out/${basename}.lam"
+    parsed="out/${basename}.jj"
     difffile="out/${basename}.diff"
     NoteGen "${parsed} ${difffile}"
     RunFail $PLC "<" "$1" ">" "${parsed}" "2>" "${errfile}" &&
@@ -160,13 +160,13 @@ if [ $# -ge 1 ]
 then
     files=$@
 else
-    files="examples/*.lam"
+    files="examples/*.jj"
 fi
 
 for file in $files
 do
   case "$file" in
-    *-fail.lam)
+    *-fail.jj)
 	  CheckFail "$file" 2>> $globallog
 	  ;;
     *)

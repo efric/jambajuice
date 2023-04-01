@@ -1,1 +1,0 @@
-(\x . \y . plus (plus x y) x) one two

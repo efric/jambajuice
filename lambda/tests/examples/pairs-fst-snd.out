@@ -1,1 +1,0 @@
-(\pair . \fst . \snd . fst (snd (pair (pair a b) (pair c d)))) (\x . \y . \f . f x y) (\p . p (\x . \y . x)) (\p . p (\x . \y . y))
