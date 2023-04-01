@@ -1,0 +1,1 @@
+"foo a0 a1 {\n    let x = a0 + a1 + 2 in {\n        x + 3\n    }\n}\n\njambajuice {\n    print foo 65 3\n}"
