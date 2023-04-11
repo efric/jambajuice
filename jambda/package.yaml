@@ -27,6 +27,12 @@ library:
   dependencies:
   - megaparsec
   - containers
+  - array
+  - base
+  - bytestring
+  build-tools:
+  - alex
+  - happy
   
 executables:
   plc:
@@ -34,3 +40,4 @@ executables:
     source-dirs: plc
     dependencies:
     - lambda
+    - bytestring
