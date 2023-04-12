@@ -3,7 +3,7 @@ module Main (main) where
 -- import Parse
 -- import Front.Parser (parseProgram)
 import Lexer (scanMany)
-import Parser( parseMiniML)
+import Parser(parseMiniML)
 import System.Environment (
   getArgs,
  )

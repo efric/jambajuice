@@ -1,3 +1,58 @@
+op := Add | Sub 
+uop := !
+type := Int | Bool | -> | ()
+
+Literal := Bool
+        | Int
+
+Expr
+  := Var String
+  | Lit Literal
+  | Let (Var, Expr) Expr
+  | App Expr Expr
+
+Lambda
+  := Lam Var Expr
+
+Def := identifier Lambda
+
+Program := [Def] // starting rule 
+
+foo a b ---parsed into --> (Def "foo" (Lam a (Lam b bodyOfFoo)))
+
+----------------------------------------
+Example Program:
+jambajuice {
+    2 + 69
+}
+
+"jambajuice"   "{"   "2"   "+"    "69" "}"
+  MAINFUNC   LBRACKET LIT   BINOP   LIT  RBRACKET
+                      2    "+"      69
+
+Funtion = MAINFUNC LBRACKET Expr RBRACKET
+
+Expr: LIT BINOP LIT
+
+foo a {
+    a + 5
+}
+
+----------------------------------------
+
+jambajuice
+  |
+lambda (argName, argVal) body
+            ()             |
+                         (App)
+                         /   \
+                        2    69
+
+Function := FuncName Args Body
+Args := arg | [arg]
+
+----------------------------------------
+
 types: int, bool, ->, ()
 (arrow takes two type arguments)
 
