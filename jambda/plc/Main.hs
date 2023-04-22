@@ -1,15 +1,24 @@
 module Main (main) where
 
--- import Parse
--- import Front.Parser (parseProgram)
+import qualified Data.ByteString.Lazy.Char8 as BS
 import Lexer (scanMany)
-import Parser(parseMiniML)
-import System.Environment (
-  getArgs,
- )
+import Parser (parseMiniMLProgram)
+import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO
-import Data.ByteString.Char8(pack)
+
+{-
+Could not load module ‘Parser’
+It is a member of the hidden package ‘ghc-8.10.7’.
+You can run ‘:set -package ghc’ to expose it.
+(Note: this unloads all the modules in the current scope.)
+-}
+
+{-
+References:
+https://serokell.io/blog/lexing-with-alex
+https://serokell.io/blog/parsing-with-happy
+-}
 
 main :: IO ()
 main = do
@@ -17,14 +26,24 @@ main = do
   case args of
     [] -> die "Error:  must input a file name.\n Example usage:\n stack exec plc -- ../tests/examples/p1.jj"
     [filename] -> do
+      -- read in the file
       handle <- openFile filename ReadMode
       contents <- hGetContents handle
-      -- TODO: make  scanMany and parseMiniML correctly....
-      -- toks <- scanMany $ pack contents
-      -- parsed <- parseMiniML
-      print contents
-    _ -> die "Error: incorrect usage.\n Example usage:\n stack exec plc -- ../tests/examples/p1.jj"
+      let input = BS.pack contents -- convert input to a bytestring
 
---print $ parse contents
--- s <- getContents
--- print $ parse s
+      -- try to scan
+      case scanMany input of
+        (Left err) -> die $ show err
+        _ ->
+          -- try to parse
+          case parseMiniMLProgram input of
+            (Left err) -> die $ show err
+            (Right ast) -> do
+              print ast
+              return ()
+
+    -- TODO: try to generate constraints
+    -- TODO: try to solve constraints
+    -- TODO: try to interpret?
+
+    _ -> die "Error: incorrect usage.\n Example usage:\n stack exec plc -- ../tests/examples/p1.jj"

@@ -1,7 +1,8 @@
 {
 {-# LANGUAGE DeriveFoldable #-}
 module Parser
-  ( parseMiniML
+  ( parseMiniML,
+    parseMiniMLProgram
   ) where
 
 import Data.ByteString.Lazy.Char8 (ByteString)
@@ -235,4 +236,9 @@ data Exp a
   | EOp a (Operator a)
   | ELetIn a (Dec a) (Exp a)
   deriving (Foldable, Show)
+
+-- | Parse a 'ByteString' and yield a list of 'Dec'.
+parseMiniMLProgram :: ByteString -> Either String [Dec L.Range]
+parseMiniMLProgram = flip L.runAlex parseMiniML
+
 }
