@@ -97,16 +97,15 @@ happyReduction_1 (HappyTerminal happy_var_1)
 	)
 happyReduction_1 _  = notHappyAtAll 
 
-happyReduce_2 = happyReduce 6 5 happyReduction_2
-happyReduction_2 ((HappyTerminal happy_var_6) `HappyStk`
+happyReduce_2 = happyReduce 5 5 happyReduction_2
+happyReduction_2 ((HappyTerminal happy_var_5) `HappyStk`
+	(HappyAbsSyn6  happy_var_4) `HappyStk`
 	_ `HappyStk`
 	_ `HappyStk`
-	_ `HappyStk`
-	(HappyAbsSyn4  happy_var_2) `HappyStk`
-	(HappyTerminal happy_var_1) `HappyStk`
+	(HappyAbsSyn4  happy_var_1) `HappyStk`
 	happyRest)
 	 = HappyAbsSyn5
-		 (Dec (L.rtRange happy_var_1 <-> info (L.rtRange happy_var_6)) happy_var_2 [] Nothing (L.rtRange happy_var_6)
+		 (Dec (info happy_var_1 <-> L.rtRange happy_var_5) happy_var_1 [] Nothing happy_var_4
 	) `HappyStk` happyRest
 
 happyReduce_3 = happySpecReduce_1  6 happyReduction_3

@@ -68,9 +68,9 @@ e.g let name '=' expr. then $1 is let, $2 is name, $3 is '=', etc
 name :: { Name L.Range }
   : identifier { unTok $1 (\range (L.Identifier name) -> Name range name) }
 
--- L.rtRange $1 gets range of let and use it to combine with end range of expr
+-- L.rtRange $1 gets range of name and use it to combine with end range of '}'
 dec :: { Dec L.Range }
-  : let name '=' exp { Dec (L.rtRange $1 <-> info $4) $2 [] Nothing $4 }
+  : name '=' '{' exp '}' { Dec (info $1 <-> L.rtRange $5) $1 [] Nothing $4 }
 
 exp :: { Exp L.Range }
   : integer    { unTok $1 (\range (L.Integer int) -> EInt range int) }
