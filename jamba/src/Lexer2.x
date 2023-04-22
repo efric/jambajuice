@@ -1,5 +1,5 @@
 {
-module Lexer
+module Lexer2
   ( -- * Invoking Alex
     Alex
   , AlexPosn (..)
@@ -11,7 +11,7 @@ module Lexer
   , Range (..)
   , RangedToken (..)
   , Token (..)
-  , scanMany
+  , scanMany2
   ) where
 
 import Control.Monad (when)
@@ -28,7 +28,8 @@ $alpha = [a-zA-Z]
 
 tokens :-
 
-<0> $white+ ;
+-- ; means skip this 
+<0> $white+ ; 
 
 <0>       "(*" { nestComment `andBegin` comment }
 <0>       "*)" { \_ _ -> alexError "Error: unexpected closing comment" }
@@ -65,6 +66,9 @@ tokens :-
 -- Parenthesis
 <0> "("     { tok LPar }
 <0> ")"     { tok RPar }
+
+<0> "{"     { tok LBrace }
+<0> "}"     { tok RBrace }
 
 -- Lists
 <0> "["     { tok LBrack }
@@ -158,6 +162,9 @@ data Token
   | Arrow
   -- EOF
   | EOF
+  -- Braces
+  | LBrace
+  | RBrace
   deriving (Eq, Show)
 
 mkRange :: AlexInput -> Int64 -> Range
@@ -172,6 +179,7 @@ tok ctor inp len =
     , rtRange = mkRange inp len
     }
 
+-- invoked when there is a match for the regex of @id 
 tokId :: AlexAction RangedToken
 tokId inp@(_, _, str, _) len =
   pure RangedToken
@@ -205,8 +213,8 @@ unnestComment input len = do
     alexSetStartCode 0
   skip input len
 
-scanMany :: ByteString -> Either String [RangedToken]
-scanMany input = runAlex input go
+scanMany2 :: ByteString -> Either String [RangedToken]
+scanMany2 input = runAlex input go
   where
     go = do
       output <- alexMonadScan
