@@ -11,7 +11,7 @@ import Data.Monoid (First (..))
 import qualified Lexer2 as L
 }
 
-%name parseJamba
+%name parseJamba decs
 %tokentype { L.RangedToken }
 %error { parseError }
 %monad { L.Alex } { >>= } { pure }
@@ -64,13 +64,37 @@ $1, $2, etc: index of body
 e.g let name '=' expr. then $1 is let, $2 is name, $3 is '=', etc
 -}
 
+optional(p)
+  :   { Nothing }
+  | p { Just $1 }
+
+many_rev(p)
+  :               { [] }
+  | many_rev(p) p { $2 : $1 }
+
+many(p)
+  : many_rev(p) { reverse $1 }
+
+type :: { Type L.Range }
+  : name { TVar (info $1) $1 }
+
+typeAnnotation :: { Type L.Range }
+  : ':' type { $2 }
+
+argument :: { Argument L.Range }
+  : '(' name optional(typeAnnotation) ')' { Argument (L.rtRange $1 <-> L.rtRange $4) $2 $3 }
+  | name                                  { Argument (info $1) $1 Nothing }
+
+--   = Dec a (Name a) [Argument a] (Maybe (Type a)) (Exp a)
+dec :: { Dec L.Range }
+  : name many(argument) optional(typeAnnotation) '=' '{' exp  '}' { Dec (info $1 <-> L.rtRange $7) $1 $2 $3 $6 }
+
+decs :: { [Dec L.Range] }
+  : many(dec) { $1 }
+
 -- pass identifier to the lambda where it is rewrapped from L.RangedToken (which has token and range) to Name range name
 name :: { Name L.Range }
   : identifier { unTok $1 (\range (L.Identifier name) -> Name range name) }
-
--- L.rtRange $1 gets range of name and use it to combine with end range of '}'
-dec :: { Dec L.Range }
-  : name '=' '{' exp '}' { Dec (info $1 <-> L.rtRange $5) $1 [] Nothing $4 }
 
 exp :: { Exp L.Range }
   : integer    { unTok $1 (\range (L.Integer int) -> EInt range int) }
