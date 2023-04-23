@@ -59,6 +59,8 @@ import qualified Lexer2 as L
   ':'        { L.RangedToken L.Colon _ }
   '->'       { L.RangedToken L.Arrow _ }
 
+%right '->'
+
 %%
 {-
 $1, $2, etc: index of body
@@ -77,7 +79,11 @@ many(p)
   : many_rev(p) { reverse $1 }
 
 type :: { Type L.Range }
-  : name { TVar (info $1) $1 }
+  : name           { TVar (info $1) $1 }
+  | '(' ')'        { TUnit (L.rtRange $1 <-> L.rtRange $2) }
+  | '(' type ')'   { TPar (L.rtRange $1 <-> L.rtRange $3) $2 }
+  | '[' type ']'   { TList (L.rtRange $1 <-> L.rtRange $3) $2 } -- to be removed
+  | type '->' type { TArrow (info $1 <-> info $3) $1 $3 }
 
 typeAnnotation :: { Type L.Range }
   : ':' type { $2 }
@@ -135,7 +141,12 @@ data Name a
 
 data Type a
   = TVar a (Name a)
+  | TPar a (Type a)
+  | TUnit a
+  | TList a (Type a)
+  | TArrow a (Type a) (Type a)
   deriving (Foldable, Show)
+
 
 data Argument a
   = Argument a (Name a) (Maybe (Type a))
