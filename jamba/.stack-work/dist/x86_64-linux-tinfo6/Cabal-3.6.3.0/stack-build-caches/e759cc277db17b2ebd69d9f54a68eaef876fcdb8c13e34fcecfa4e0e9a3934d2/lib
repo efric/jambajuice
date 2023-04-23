@@ -1,5 +1,5 @@
 /home/spinel/jambajuice/jamba/README.md:
-  hash: f75c2a2f4f88c3f71d171e9ca090b6d0b00eb44271635ce3c6217b4dd0c09cd3
+  hash: 7fb16dd944c4fce806cdfa8dddaed014a77f2d18c470a7c9304e6c23f685b42a
 /home/spinel/jambajuice/jamba/jamba.cabal:
   hash: b81a201102c766b10b33d5b9ee66c1068698ad9d17831b9e82a48b3b2309f60b
 /home/spinel/jambajuice/jamba/.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.6.3.0/build/autogen/Paths_jamba.hs:
@@ -13,7 +13,7 @@
 /home/spinel/.stack/programs/x86_64-linux/ghc-tinfo6-9.2.7/lib/ghc-9.2.7/include/ghcconfig.h:
   hash: 03f4611ae97decc9e8c76c212bf7886d003b29d5c62b43fee6623a799f6e5fdf
 /home/spinel/jambajuice/jamba/src/Parser2.y:
-  hash: dfe15c5c13a32d4afad6a99d7233800591ebd49a9e8ef56f7732b7095dea1f1e
+  hash: aff70f5da59771d4acfa9e2095738728d1c5650bfb0b56a9ea80474d54e76340
 /home/spinel/jambajuice/jamba/.stack-work/dist/x86_64-linux-tinfo6/Cabal-3.6.3.0/build/autogen/cabal_macros.h:
   hash: da6a76d0702cf23e2844b4bdeef1b1702c2313a4d038ba24ee0a918497896c7b
 /home/spinel/jambajuice/jamba/src/Lexer2.x:
