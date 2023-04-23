@@ -1,7 +1,8 @@
 {
 {-# LANGUAGE DeriveFoldable #-}
 module Parser2
-  ( parseJamba
+  ( parseJamba,
+    parseJambaProgram
   ) where
 
 import Data.ByteString.Lazy.Char8 (ByteString)
@@ -149,5 +150,9 @@ data Exp a
   | EVar a (Name a)
   | EString a ByteString
   deriving (Foldable, Show)
+
+-- | Parse a 'ByteString' and yield a list of 'Dec'.
+parseJambaProgram :: ByteString -> Either String [Dec L.Range]
+parseJambaProgram = flip L.runAlex parseJamba
 
 }

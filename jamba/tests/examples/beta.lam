@@ -1,0 +1,3 @@
+(\ x . (\ z . z z) x three) ((\ y . y y) (\ w . w))
+
+-- Should reduce to three

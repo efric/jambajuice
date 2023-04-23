@@ -1,0 +1,42 @@
+
+###### Testing p1
+stack exec plc -- examples/p1.jj > out/p1.out
+Stack has not been tested with GHC versions above 9.0, and using 9.2.7, this may fail
+Stack has not been tested with Cabal versions above 3.4, but version 3.6.3.0 was found, this may fail
+examples/p1.out not found
+###### FAILED
+
+###### Testing p2
+stack exec plc -- examples/p2.jj > out/p2.out
+Stack has not been tested with GHC versions above 9.0, and using 9.2.7, this may fail
+Stack has not been tested with Cabal versions above 3.4, but version 3.6.3.0 was found, this may fail
+examples/p2.out not found
+###### FAILED
+
+###### Testing p3
+stack exec plc -- examples/p3.jj > out/p3.out
+Stack has not been tested with GHC versions above 9.0, and using 9.2.7, this may fail
+Stack has not been tested with Cabal versions above 3.4, but version 3.6.3.0 was found, this may fail
+examples/p3.out not found
+###### FAILED
+
+###### Testing p4
+stack exec plc -- examples/p4.jj > out/p4.out
+Stack has not been tested with GHC versions above 9.0, and using 9.2.7, this may fail
+Stack has not been tested with Cabal versions above 3.4, but version 3.6.3.0 was found, this may fail
+examples/p4.out not found
+###### FAILED
+
+###### Testing p5
+stack exec plc -- examples/p5.jj > out/p5.out
+Stack has not been tested with GHC versions above 9.0, and using 9.2.7, this may fail
+Stack has not been tested with Cabal versions above 3.4, but version 3.6.3.0 was found, this may fail
+examples/p5.out not found
+###### FAILED
+
+###### Testing p6
+stack exec plc -- examples/p6.jj > out/p6.out
+Stack has not been tested with GHC versions above 9.0, and using 9.2.7, this may fail
+Stack has not been tested with Cabal versions above 3.4, but version 3.6.3.0 was found, this may fail
+examples/p6.out not found
+###### FAILED
