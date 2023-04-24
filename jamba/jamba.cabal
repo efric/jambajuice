@@ -15,9 +15,11 @@ extra-source-files:
 
 library
   exposed-modules:
-      Parser2
+      Lexer
       Lexer2
       Main
+      Parser
+      Parser2
   other-modules:
       Paths_jamba
   hs-source-dirs:

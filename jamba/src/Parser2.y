@@ -17,6 +17,7 @@ import qualified Lexer2 as L
 %error { parseError }
 %monad { L.Alex } { >>= } { pure }
 %lexer { lexer } { L.RangedToken L.EOF _ }
+%expect 0
 
 %token
   -- Identifiers
@@ -37,7 +38,7 @@ import qualified Lexer2 as L
   '/'        { L.RangedToken L.Divide _ }
   -- Comparison operators
   '='        { L.RangedToken L.Eq _ }
-  '<>'       { L.RangedToken L.Neq _ }
+  '!='       { L.RangedToken L.Neq _ }
   '<'        { L.RangedToken L.Lt _ }
   '<='       { L.RangedToken L.Le _ }
   '>'        { L.RangedToken L.Gt _ }
@@ -59,7 +60,13 @@ import qualified Lexer2 as L
   ':'        { L.RangedToken L.Colon _ }
   '->'       { L.RangedToken L.Arrow _ }
 
+%right else in
 %right '->'
+%left '|'
+%left '&'
+%nonassoc '=' '!=' '<' '>' '<=' '>='
+%left '+' '-'
+%left '*' '/'
 
 %%
 {-
@@ -77,6 +84,13 @@ many_rev(p)
 
 many(p)
   : many_rev(p) { reverse $1 }
+
+sepBy_rev(p, sep)
+  :                         { [] }
+  | sepBy_rev(p, sep) sep p { $3 : $1 }
+
+sepBy(p, sep)
+  : sepBy_rev(p, sep) { reverse $1 }
 
 type :: { Type L.Range }
   : name           { TVar (info $1) $1 }
@@ -104,9 +118,57 @@ name :: { Name L.Range }
   : identifier { unTok $1 (\range (L.Identifier name) -> Name range name) }
 
 exp :: { Exp L.Range }
-  : integer    { unTok $1 (\range (L.Integer int) -> EInt range int) }
-  | name       { EVar (info $1) $1 }
-  | string     { unTok $1 (\range (L.String string) -> EString range string) }
+  : expapp                   { $1 }
+  | expcond                  { $1 }
+  | let dec in '{' exp '}'   { ELetIn (L.rtRange $1 <-> L.rtRange $6) $2 $5 }
+  | '-' exp                  { ENeg (L.rtRange $1 <-> info $2) $2 }
+    -- Arithmetic operators
+  | exp '+'  exp             { EBinOp (info $1 <-> info $3) $1 (Plus (L.rtRange $2)) $3 }
+  | exp '-'  exp             { EBinOp (info $1 <-> info $3) $1 (Minus (L.rtRange $2)) $3 }
+  | exp '*'  exp             { EBinOp (info $1 <-> info $3) $1 (Times (L.rtRange $2)) $3 }
+  | exp '/'  exp             { EBinOp (info $1 <-> info $3) $1 (Divide (L.rtRange $2)) $3 }
+  -- Comparison operators
+  | exp '='  exp             { EBinOp (info $1 <-> info $3) $1 (Eq (L.rtRange $2)) $3 }
+  | exp '!=' exp             { EBinOp (info $1 <-> info $3) $1 (Neq (L.rtRange $2)) $3 }
+  | exp '<'  exp             { EBinOp (info $1 <-> info $3) $1 (Lt (L.rtRange $2)) $3 }
+  | exp '<=' exp             { EBinOp (info $1 <-> info $3) $1 (Le (L.rtRange $2)) $3 }
+  | exp '>'  exp             { EBinOp (info $1 <-> info $3) $1 (Gt (L.rtRange $2)) $3 }
+  | exp '>=' exp             { EBinOp (info $1 <-> info $3) $1 (Ge (L.rtRange $2)) $3 }
+  -- Logical operators
+  | exp '&'  exp             { EBinOp (info $1 <-> info $3) $1 (And (L.rtRange $2)) $3 }
+  | exp '|'  exp             { EBinOp (info $1 <-> info $3) $1 (Or (L.rtRange $2)) $3 }
+
+
+expapp :: { Exp L.Range }
+  : expapp atom              { EApp (info $1 <-> info $2) $1 $2 }
+  | atom                     { $1 }
+
+expcond :: { Exp L.Range }
+  : if exp '{' exp '}' %shift   { EIfThen (L.rtRange $1 <-> L.rtRange $5) $2 $4 }
+  | if exp '{' exp '}' else '{' exp '}' { EIfThenElse (L.rtRange $1 <-> L.rtRange $9) $2 $4 $8 }
+
+atom :: { Exp L.Range }
+  : integer                  { unTok $1 (\range (L.Integer int) -> EInt range int) }
+  | name                     { EVar (info $1) $1 }
+  | string                   { unTok $1 (\range (L.String string) -> EString range string) }
+  | '(' ')'                  { EUnit (L.rtRange $1 <-> L.rtRange $2) }
+  | '[' sepBy(exp, ',') ']'  { EList (L.rtRange $1 <-> L.rtRange $3) $2 } -- not used
+  | '(' exp ')'              { EPar (L.rtRange $1 <-> L.rtRange $3) $2 }
+   -- Arithmetic operators
+  | '(' '+' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Plus (L.rtRange $2)) }
+  | '(' '-' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Minus (L.rtRange $2)) }
+  | '(' '*' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Times (L.rtRange $2)) }
+  | '(' '/' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Divide (L.rtRange $2)) }
+  -- Comparison operators
+  | '(' '=' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Eq (L.rtRange $2)) }
+  | '(' '!=' ')'             { EOp (L.rtRange $1 <-> L.rtRange $3) (Neq (L.rtRange $2)) }
+  | '(' '<' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Lt (L.rtRange $2)) }
+  | '(' '<=' ')'             { EOp (L.rtRange $1 <-> L.rtRange $3) (Le (L.rtRange $2)) }
+  | '(' '>' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Gt (L.rtRange $2)) }
+  | '(' '>=' ')'             { EOp (L.rtRange $1 <-> L.rtRange $3) (Ge (L.rtRange $2)) }
+  -- Logical operators
+  | '(' '&' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (And (L.rtRange $2)) }
+  | '(' '|' ')'              { EOp (L.rtRange $1 <-> L.rtRange $3) (Or (L.rtRange $2)) }
 
 
 {
@@ -156,10 +218,35 @@ data Dec a
   = Dec a (Name a) [Argument a] (Maybe (Type a)) (Exp a)
   deriving (Foldable, Show)
 
+data Operator a
+  = Plus a
+  | Minus a
+  | Times a
+  | Divide a
+  | Eq a
+  | Neq a
+  | Lt a
+  | Le a
+  | Gt a
+  | Ge a
+  | And a
+  | Or a
+  deriving (Foldable, Show)
+
 data Exp a
   = EInt a Integer
   | EVar a (Name a)
   | EString a ByteString
+  | EUnit a
+  | EList a [Exp a]
+  | EPar a (Exp a)
+  | EApp a (Exp a) (Exp a)
+  | EIfThen a (Exp a) (Exp a)
+  | EIfThenElse a (Exp a) (Exp a) (Exp a)
+  | ENeg a (Exp a)
+  | EBinOp a (Exp a) (Operator a) (Exp a)
+  | EOp a (Operator a)
+  | ELetIn a (Dec a) (Exp a)
   deriving (Foldable, Show)
 
 -- | Parse a 'ByteString' and yield a list of 'Dec'.

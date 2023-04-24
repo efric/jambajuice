@@ -1,0 +1,7 @@
+foo (a:int) b : int = {
+    a + b
+}
+
+jambajuice = {
+    foo 5 6
+}

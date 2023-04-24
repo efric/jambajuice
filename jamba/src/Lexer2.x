@@ -53,7 +53,7 @@ tokens :-
 
 -- Comparison operators
 <0> "="     { tok Eq }
-<0> "<>"    { tok Neq }
+<0> "!="    { tok Neq }
 <0> "<"     { tok Lt }
 <0> "<="    { tok Le }
 <0> ">"     { tok Gt }

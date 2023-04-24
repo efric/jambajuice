@@ -1,7 +1,7 @@
-foo a {
+foo a = {
     a + 5
 }
 
-jambajuice {
+jambajuice = {
     print foo 65
 }

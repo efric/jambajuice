@@ -1,9 +1,9 @@
-foo a0 a1 {
-    let x = a0 + a1 + 2 in {
+foo a0 a1 = {
+    let x = { a0 + a1 + 2} in {
         x + 3
     }
 }
 
-jambajuice {
+jambajuice = {
     print foo 65 3
 }
