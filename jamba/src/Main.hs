@@ -1,8 +1,8 @@
 module Main (main) where
 
 import qualified Data.ByteString.Lazy.Char8 as BS
-import Lexer2 (scanMany2)
-import Parser2 (parseJambaProgram)
+import Lexer (scanMany2)
+import Parser (parseJambaProgram)
 import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO
