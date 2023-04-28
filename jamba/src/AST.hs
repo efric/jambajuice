@@ -59,5 +59,4 @@ data Exp a
   | EBinOp a (Exp a) (Operator a) (Exp a)
   | EOp a (Operator a)
   | ELetIn a (Dec a) (Exp a)
-  | ELam a (Name a) (Exp a)
   deriving (Foldable, Show)
