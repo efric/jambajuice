@@ -10,6 +10,9 @@ import qualified Data.ByteString.Lazy.Char8 as C
 import Control.Monad.Identity
 import qualified Data.Map as Map
 
+instance MonadFail Identity where
+  fail = error "Jamba went bad" 
+
 data Value a
   = VInt Integer
   | VBool Bool
@@ -33,13 +36,14 @@ eval env expr = case expr of
   EVar _ (Name _ x) -> do
     let Just v = Map.lookup (C.unpack x) env 
     pure v
-{-
-  Op op a b -> do
+
+  EBinOp _ a op b -> do
     VInt a' <- eval env a
     VInt b' <- eval env b
-    return $ (binop op) a' b'
+    return $ (binop op) a' b' 
 
-  Lam x body ->
+{-
+  ELetIn _ x body ->
     return (VClosure x body env)
 
   App fun arg -> do
