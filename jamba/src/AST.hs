@@ -1,62 +1,26 @@
-{-# LANGUAGE DeriveFoldable #-}
-module AST (
-    Name (..),
-    Type (..),
-    Argument (..),
-    Dec (..),
-    Operator (..),
-    Exp (..),
-) where
+module AST where
 
-import Data.ByteString.Lazy.Char8 (ByteString)
+type Var = String
 
-data Name a
-  = Name a ByteString
-  deriving (Foldable, Show)
+data Expr
+  = Var Var
+  | App Expr Expr
+  | Lam Var Expr
+  | Let Var Expr Expr
+  | Lit Lit
+  | If Expr Expr Expr
+  | Fix Expr
+  | Op Binop Expr Expr
+  deriving (Show, Eq, Ord)
 
-data Type a
-  = TVar a (Name a)
-  | TPar a (Type a)
-  | TUnit a
-  | TList a (Type a)
-  | TArrow a (Type a) (Type a)
-  deriving (Foldable, Show)
+data Lit
+  = LInt Integer
+  | LBool Bool
+  deriving (Show, Eq, Ord)
 
-data Argument a
-  = Argument a (Name a) (Maybe (Type a))
-  deriving (Foldable, Show)
+data Binop = Add | Sub | Mul | Eql
+  deriving (Eq, Ord, Show)
 
-data Dec a
-  = Dec a (Name a) [Argument a] (Maybe (Type a)) (Exp a)
-  deriving (Foldable, Show)
+type Decl = (String, Expr)
 
-data Operator a
-  = Plus a
-  | Minus a
-  | Times a
-  | Divide a
-  | Eq a
-  | Neq a
-  | Lt a
-  | Le a
-  | Gt a
-  | Ge a
-  | And a
-  | Or a
-  deriving (Foldable, Show)
-
-data Exp a
-  = EInt a Integer
-  | EVar a (Name a)
-  | EString a ByteString
-  | EUnit a
-  | EList a [Exp a]
-  | EPar a (Exp a)
-  | EApp a (Exp a) (Exp a)
-  | EIfThen a (Exp a) (Exp a)
-  | EIfThenElse a (Exp a) (Exp a) (Exp a)
-  | ENeg a (Exp a)
-  | EBinOp a (Exp a) (Operator a) (Exp a)
-  | EOp a (Operator a)
-  | ELetIn a (Dec a) (Exp a)
-  deriving (Foldable, Show)
+data Program = Program [Decl] Expr deriving (Show, Eq)
