@@ -1,12 +1,11 @@
 module Lexer where
 
-import Text.Parsec
-import Text.Parsec.Text.Lazy
+import Text.Parsec ( eof, alphaNum, letter, oneOf, (<|>) )
+import Text.Parsec.Text.Lazy ( Parser )
 import qualified Data.Text.Lazy as L
 import qualified Text.Parsec.Token as Tok
 import qualified Text.Parsec.Expr as Ex
-
-import Data.Functor.Identity
+import Data.Functor.Identity ( Identity )
 
 type Op a = Ex.Operator L.Text () Identity a
 type Operators a = Ex.OperatorTable L.Text () Identity a
@@ -16,9 +15,7 @@ reservedNames = [
     "let",
     "in",
     "fix",
-    "rec",
     "if",
-    "then",
     "else"
   ]
 
@@ -36,7 +33,7 @@ lexer :: Tok.GenTokenParser L.Text () Identity
 lexer = Tok.makeTokenParser $ Tok.LanguageDef
   { Tok.commentStart    = "/*"
   , Tok.commentEnd      = "*/"
-  , Tok.commentLine     = "--"
+  , Tok.commentLine     = "//"
   , Tok.nestedComments  = True
   , Tok.identStart      = letter
   , Tok.identLetter     = alphaNum <|> oneOf "_'"

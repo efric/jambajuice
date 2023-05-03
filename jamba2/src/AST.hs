@@ -18,7 +18,7 @@ data Lit
   | LBool Bool
   deriving (Show, Eq, Ord)
 
-data Binop = Add | Sub | Mul | Eql
+data Binop = Add | Sub | Mul | Eql | Neq
   deriving (Eq, Ord, Show)
 
 type Decl = (String, Expr)

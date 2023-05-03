@@ -1,43 +1,46 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Parser (
-  -- parseExpr,
   parseModule
 ) where
 
 import Text.Parsec
+    ( ParseError, many1, (<|>), many, parse, try )
 import Text.Parsec.Text.Lazy (Parser)
-
 import qualified Text.Parsec.Expr as Ex
 import qualified Text.Parsec.Token as Tok
-
 import qualified Data.Text.Lazy as L
 
 import Lexer
+    ( Operators,
+      Op,
+      lexer,
+      reserved,
+      reservedOp,
+      identifier,
+      parens,
+      contents,
+      braces )
 import AST
+    ( Binop(Neq, Add, Sub, Mul, Eql), Lit(LBool, LInt), Expr(..) )
 
-integer :: Parser Integer
-integer = Tok.integer lexer
+natural :: Parser Integer
+natural = Tok.natural lexer
 
 variable :: Parser Expr
-variable = do
-  x <- identifier
-  return (Var x)
+variable = Var <$> identifier
 
 number :: Parser Expr
-number = do
-  n <- integer
-  return (Lit (LInt (fromIntegral n)))
+number = Lit . LInt  <$> natural
 
 bool :: Parser Expr
-bool = (reserved "True" >> return (Lit (LBool True)))
-    <|> (reserved "False" >> return (Lit (LBool False)))
+bool = (reserved "true" >> return (Lit (LBool True)))
+    <|> (reserved "false" >> return (Lit (LBool False)))
 
 fix :: Parser Expr
 fix = do
   reservedOp "fix"
-  x <- expr
-  return (Fix x)
+  Fix <$> expr
 
 lambda :: Parser Expr
 lambda = do
@@ -45,7 +48,7 @@ lambda = do
   args <- many identifier
   reservedOp "->"
   body <- expr
-  return $ foldr Lam body args
+  pure $ foldr Lam body args
 
 letin :: Parser Expr
 letin = do
@@ -55,7 +58,7 @@ letin = do
   e1 <- expr
   reserved "in"
   e2 <- braces expr
-  return (Let x e1 e2)
+  pure $ Let x e1 e2
 
 ifthen :: Parser Expr
 ifthen = do
@@ -64,7 +67,7 @@ ifthen = do
   tr <- braces expr
   reserved "else"
   fl <- braces expr
-  return $ If cond tr fl
+  pure $ If cond tr fl
 
 aexp :: Parser Expr
 aexp =
@@ -88,14 +91,15 @@ infixOp x f = Ex.Infix (reservedOp x >> return f)
 table :: Operators Expr
 table = [
     [
-      infixOp "*" (Op Mul) Ex.AssocLeft
-    ],
-    [
       infixOp "+" (Op Add) Ex.AssocLeft
     , infixOp "-" (Op Sub) Ex.AssocLeft
     ],
     [
-      infixOp "==" (Op Eql) Ex.AssocLeft
+      infixOp "*" (Op Mul) Ex.AssocLeft
+    ],
+    [
+      infixOp "==" (Op Eql) Ex.AssocLeft,
+      infixOp "!=" (Op Neq) Ex.AssocLeft
     ]
   ]
 
@@ -110,7 +114,7 @@ letdecl = do
   args <- many identifier
   reservedOp "="
   body <- braces expr
-  return (name, foldr Lam body args)
+  pure (name, foldr Lam body args)
 
 letrecdecl :: Parser (String, Expr)
 letrecdecl = do
@@ -119,7 +123,7 @@ letrecdecl = do
   args <- many identifier
   reservedOp "="
   body <- braces expr
-  return (name, Fix $ foldr Lam body (name:args))
+  pure (name, Fix $ foldr Lam body (name:args))
 
 val :: Parser Binding
 val = do
@@ -131,15 +135,10 @@ decl = try letrecdecl <|> letdecl <|> val
 
 top :: Parser Binding
 top = do
-  x <- decl
-  optional semi
-  return x
+  decl
 
 modl ::  Parser [Binding]
 modl = many top
 
--- parseExpr :: L.Text -> Either ParseError Expr
--- parseExpr input = parse (contents expr) "<stdin>" input
-
 parseModule ::  L.Text -> Either ParseError [(String, Expr)]
-parseModule input = parse (contents modl) "" input
+parseModule = parse (contents modl) ""

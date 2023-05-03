@@ -1,0 +1,13 @@
+sup n = {
+    n + 5
+}
+
+hey n a b = {
+    n * a * b
+}
+
+jambajuice = {
+    let x = hey 1 2 3 + sup 3 in {
+        sup x
+    }
+}

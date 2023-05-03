@@ -3,24 +3,22 @@ module Main (main) where
 import Parser (parseModule)
 import System.Environment (getArgs)
 import System.Exit (die)
-import System.IO
-import qualified Data.Text.Lazy as L
 import qualified Data.Text.Lazy.IO as L
-import Data.Monoid
-import Control.Monad.State.Strict
+import qualified Data.Map as Map
+import Control.Monad.State.Strict ( MonadIO(liftIO) )
+import Eval ( TermEnv, emptyTmenv, runEval )
+import AST ( Expr )
+import Data.List (foldl')
 
--- main :: IO ()
--- main = do
---   putStrLn "hello world"
-
-{-
-References:
-https://serokell.io/blog/lexing-with-alex
-https://serokell.io/blog/parsing-with-happy
--}
-
-
+usage :: String
 usage = "./src/Main tests/examples/p1.jj"
+
+mainfn :: String
+mainfn = "jambajuice"
+
+evalDef :: TermEnv -> (String, Expr) -> TermEnv
+evalDef env (nm, ex) = tmctx'
+  where (_, tmctx') = runEval env nm ex
 
 main :: IO ()
 main = do
@@ -28,30 +26,16 @@ main = do
   case args of
     [] -> die $ "Error:  must input a file name.\n Example usage:\n" ++ usage
     [filename] -> do
-      -- read in the file
       contents <- liftIO $ L.readFile filename
-      -- handle <- openFile filename ReadMode
-      -- contents <- hGetContents handle
 
       case parseModule contents of
         (Left err) -> die $ show err
         (Right ast) -> do
-          print ast
-          return ()
-
-      -- -- try to scan
-      -- case scanMany2 input of
-        -- (Left err) -> die $ show err
-        -- _ ->
-          -- try to parse
-          -- case parseModule input of
-            -- (Left err) -> die $ show err
-            -- (Right ast) -> do
-              -- print ast
-              -- return ()
-
-    -- TODO: try to generate constraints
-    -- TODO: try to solve constraints
-    -- TODO: try to interpret?
+          -- print ast
+          let eval = foldl' evalDef emptyTmenv ast
+          case Map.lookup mainfn eval of
+            Just v -> print v
+            Nothing -> die $ "No main function (" ++ mainfn ++ ") in file\n"
+          pure ()
 
     _ -> die $ "Error: incorrect usage.\n Example usage:\n"  ++ usage

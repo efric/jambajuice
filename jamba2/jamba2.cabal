@@ -29,6 +29,7 @@ executable jamba2
     Lexer
     Parser
     AST
+    Eval
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
