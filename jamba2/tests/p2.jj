@@ -1,7 +1,7 @@
 jambajuice = {
     if true {
-        print 68 
+        68 
     } else {
-        print 70 
+        70 
     }
 }

@@ -1,9 +1,9 @@
 foo a0 a1 = {
-    let x = { a0 + a1 + 2} in {
+    let x = a0 + a1 in {
         x + 3
     }
 }
 
 jambajuice = {
-    print foo 65 3
+    foo 65 3
 }

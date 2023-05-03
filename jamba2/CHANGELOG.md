@@ -1,4 +1,4 @@
-# Changelog for `jamba`
+# Changelog for `jamba2`
 
 All notable changes to this project will be documented in this file.
 

@@ -1,0 +1,9 @@
+jambajuice = {
+    let x = 70 in {
+        if x == 70 {
+            99
+        } else {
+           70
+        }
+    }
+}

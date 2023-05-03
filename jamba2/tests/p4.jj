@@ -3,5 +3,5 @@ foo a = {
 }
 
 jambajuice = {
-    print foo 65
+    foo 65
 }

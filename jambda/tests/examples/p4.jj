@@ -1,9 +1,0 @@
-jambajuice {
-    let x = 70 in {
-        if !x {
-            print 99
-        } else {
-            print 70
-        }
-    }
-}
