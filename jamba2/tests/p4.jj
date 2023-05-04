@@ -1,0 +1,7 @@
+foo a = {
+    a + 5
+}
+
+jambajuice = {
+    foo 65
+}

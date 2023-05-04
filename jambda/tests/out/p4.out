@@ -1,1 +1,0 @@
-"jambajuice {\n    let x = 70 in {\n        if !x {\n            print 99\n        } else {\n            print 70\n        }\n    }\n}"

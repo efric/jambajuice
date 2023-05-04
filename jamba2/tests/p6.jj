@@ -1,0 +1,9 @@
+foo a0 a1 = {
+    let x = a0 + a1 in {
+        x + 3
+    }
+}
+
+jambajuice = {
+    foo 65 3
+}
