@@ -68,6 +68,10 @@ binop Mul a b = VInt $ a * b
 binop Sub a b = VInt $ a - b
 binop Eql a b = VBool $ a == b
 binop Neq a b = VBool $ a /= b
+binop Lt a b = VBool $ a < b
+binop Le a b = VBool $ a <= b
+binop Gt a b = VBool $ a > b
+binop Ge a b = VBool $ a >= b
 
 runEval :: TermEnv -> String -> Expr -> (Value, TermEnv)
 runEval env nm ex =

@@ -16,6 +16,9 @@ usage = "./src/Main tests/examples/p1.jj"
 mainfn :: String
 mainfn = "jambajuice"
 
+-- -- map with keys: functions names, values: number of arguments
+-- type Func2Arg = Map.Map String Integer
+
 evalDef :: TermEnv -> (String, Expr) -> TermEnv
 evalDef env (nm, ex) = tmctx'
   where (_, tmctx') = runEval env nm ex

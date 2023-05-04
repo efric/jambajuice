@@ -22,7 +22,6 @@ import Lexer
       contents,
       braces )
 import AST
-    ( Binop(Neq, Add, Sub, Mul, Eql), Lit(LBool, LInt), Expr(..) )
 
 natural :: Parser Integer
 natural = Tok.natural lexer
@@ -99,7 +98,11 @@ table = [
     ],
     [
       infixOp "==" (Op Eql) Ex.AssocLeft,
-      infixOp "!=" (Op Neq) Ex.AssocLeft
+      infixOp "!=" (Op Neq) Ex.AssocLeft,
+      infixOp "<" (Op Lt) Ex.AssocLeft,
+      infixOp "<=" (Op Le) Ex.AssocLeft,
+      infixOp ">" (Op Gt) Ex.AssocLeft,
+      infixOp ">=" (Op Ge) Ex.AssocLeft
     ]
   ]
 
