@@ -11,17 +11,18 @@ _______________________
 Func name | Type Scheme
 "add"     | For every [], [int, int, int]
 _____________________
-Node ID | Type Var(s)
-1       | A -> B
-2       | C
-3       | D
-4       | E
-5       | F
-6       | G
-7       | H 
+Node ID | Type Var(s)           
+1       | A -> B                --------------------> hasType(node_1,[A,B]):- sup_typechecks(A,B,_,_,_,_,_,_).
+2       | C                     --------------------> hasType(node_2, C):- sup_typechecks(_,_,C,_,_,_,_,_).
+3       | D                     --------------------> hasType(node_3, D):- sup_typechecks(_,_,_,D,_,_,_,_).
+4       | E                     --------------------> etc.
+5       | F                     --------------------> etc.
+6       | G                     --------------------> etc.
+7       | H                     --------------------> etc.
 
-Traverse AST Tree...
+sup_typechecks(A,B,C,D,E,F,G,H) :- ...
 
+Traverse AST Tree to typecheck sup...
 ______________________
 Var name | Node ID
 "n"      | 2
