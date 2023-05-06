@@ -50,3 +50,10 @@ Node 7 (var):
 Node 5 (lit):
 - node 5  = int                 --------------------> F = int
 ```
+
+To figure out app rule, maybe it would help to look at the hindley milner rules.
+
+![image info](./slide_17.png)
+
+![image info](./slide_59.png)
+
