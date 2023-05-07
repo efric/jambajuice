@@ -9,51 +9,70 @@ sup n = {
 Typechecking...
 _______________________
 Func name | Type Scheme
-"add"     | For every [], [int, int, int]
+"add"     | For every [], [int, int, int] ----------> hasTypeScheme(add,[],[int, [int, int]]).
 _____________________
 Node ID | Type Var(s)           
-1       | A -> B                --------------------> hasType(node_1,[A,B]):- sup_typechecks(A,B,_,_,_,_,_,_).
-2       | C                     --------------------> hasType(node_2, C):- sup_typechecks(_,_,C,_,_,_,_,_).
-3       | D                     --------------------> hasType(node_3, D):- sup_typechecks(_,_,_,D,_,_,_,_).
-4       | E                     --------------------> etc.
-5       | F                     --------------------> etc.
-6       | G                     --------------------> etc.
-7       | H                     --------------------> etc.
+1       | A                     --------------------> hasType(node_1, A):- sup_typechecks(A,_,_,_,_,_,_).
+2       | C                     --------------------> hasType(node_2, C):- sup_typechecks(_,C,_,_,_,_,_).
+3       | D                     --------------------> hasType(node_3, D):- sup_typechecks(_,_,D,_,_,_,_).
+4       | E                     --------------------> hasType(node_4, E):- sup_typechecks(_,_,_,E,_,_,_).
+5       | F                     --------------------> hasType(node_5, F):- sup_typechecks(_,_,_,_,F,_,_).
+6       | G                     --------------------> hasType(node_6, G):- sup_typechecks(_,_,_,_,_,G,_).
+7       | H                     --------------------> hasType(node_7, H):- sup_typechecks(_,_,_,_,_,_,H).
 
 sup_typechecks(A,B,C,D,E,F,G,H) :- ...
 
 Traverse AST Tree to typecheck sup...
-______________________
-Var name | Node ID
-"n"      | 2
+____________________________________
+Var name | Node ID | Arg or Binder? 
+"n"      | 2       | arg
 
 Node 1 (lam var expr):
-- [node 2, node 3] = node 1     --------------------> [C, D] = [A, B]
-- add "n" to var table          --------------------> n/a
+- Lambda nodes have arrow type  --------------------> arrow(A)
+- [node 2, node 3] = node 1     --------------------> [C, D] = A
+- add arg "n" to var table      --------------------> n/a
 
 Node 2 (var):
 - node 2 = lookup("n")          --------------------> C = C
 
 Node 3 (App expr expr):
-- head node 4 = node 5          --------------------> head E = F
-- tail node 4 = node 3          --------------------> tail E = D
+- LHS must be an arrow type    --------------------> arrow(E)
+- fst node 4 = node 5          --------------------> fst(E,F)
+- snd node 4 = node 3          --------------------> snd(E,D)
 
 Node 4 (App var expr):
-- head node 6 = node 7          --------------------> head G = H
-- tail node 6 = node 4          --------------------> tail G = E 
+- LHS must be an arrow type    --------------------> arrow(G)
+- fst node 6 = node 7          --------------------> fst(G,H)
+- snd node 6 = node 4          --------------------> snd(G,E)
 Node 6 (var):
-- node 6 = lookupFunc("add")    --------------------> G = [int, int, int]
+- node 6 = lookupFunc("add")   --------------------> instantiates(G,add)
 
 Node 7 (var):
-- node 7 = lookup("n")          --------------------> H = C
+- node 7 = lookup("n")         --------------------> H = C
 
 Node 5 (lit):
-- node 5  = int                 --------------------> F = int
+- node 5  = int                --------------------> F = int
 ```
 
-To figure out app rule, maybe it would help to look at the hindley milner rules.
+Prolog constraints for typechecking sup collected together (full file [here](../prolog/supv2.pl)):
 
-![image info](./slide_17.png)
+```prolog
+% language specific
+hasTypeScheme(add,[],[int, [int, int]]).
 
-![image info](./slide_59.png)
+% program specific
+sup_typechecks(A,C,D,E,F,G,H) :-
+ [C, D] = A, arrow(A),
+ arrow(E), fst(E,F), snd(E,D),
+ arrow(G), fst(G,H), snd(G,E),
+ instantiates(G,add), H = C, F = int.
+
+hasType(node_1, A):- sup_typechecks(A,_,_,_,_,_,_).
+hasType(node_2, C):- sup_typechecks(_,C,_,_,_,_,_).
+hasType(node_3, D):- sup_typechecks(_,_,D,_,_,_,_).
+hasType(node_4, E):- sup_typechecks(_,_,_,E,_,_,_).
+hasType(node_5, F):- sup_typechecks(_,_,_,_,F,_,_).
+hasType(node_6, G):- sup_typechecks(_,_,_,_,_,G,_).
+hasType(node_7, H):- sup_typechecks(_,_,_,_,_,_,H).
+```
 
