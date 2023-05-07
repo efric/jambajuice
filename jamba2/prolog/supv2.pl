@@ -50,4 +50,4 @@ hasType(node_6, G):- sup_typechecks(_,_,_,_,_,G,_).
 hasType(node_7, H):- sup_typechecks(_,_,_,_,_,_,H).
 
 % output results of typechecking!
-:- initialization forall(hasType(X,Y), (write(X),write(' has type '), writeln(Y))).
+:- initialization forall(hasType(X,Y), (write(X),write(' '), writeln(Y))),halt().
