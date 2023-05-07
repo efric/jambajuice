@@ -27,22 +27,26 @@ Prolog constraints for typechecking test_let collected together (full file [here
 % language specific
 
 % program specific
-main_typechecks(X1,X2,X3,X4,X5,X6,X7,X8,X9):- 
- arrow(X2), snd(X2,X1), fst(X2,X3),
- arrow(X4), snd(X4,X2), fst(X4,X5),
- arrow(X8), snd(X8, X5), fst(X8,X9),
- arrow(X6), snd(X6,X3), fst(X6,X7), 
- instantiates(X4, and), instantiates(X8, isNum), instantiates(X13, isNum),
- X9=int,X7=bool.
+test_let_typechecks(X10,X11,X12,X13,X14,X15,X16,X17,X18,X19,X20,X21,X22):-
+X11=X12, X10=X14, 
+X12=[X16,X13],
+X15=X17, X14=X18,
+arrow(X19), fst(X19,X20), snd(X19,X17),
+arrow(X21), fst(X21,X22), snd(X21,X18),
+X20=bool, X22=int, X16=X13, copy_term(X11,X21), copy_term(X11,X19).
 
-hasType(node_8, X1) :- main_typechecks(X1,_,_,_,_,_,_,_,_).
-hasType(node_9, X2) :- main_typechecks(_,X2,_,_,_,_,_,_,_).
-hasType(node_10, X3) :- main_typechecks(_,_,X3,_,_,_,_,_,_).
-hasType(node_11, X4) :- main_typechecks(_,_,_,X4,_,_,_,_,_).
-hasType(node_12, X5) :- main_typechecks(_,_,_,_,X5,_,_,_,_).
-hasType(node_13, X6) :- main_typechecks(_,_,_,_,_,X6,_,_,_).
-hasType(node_14, X7) :- main_typechecks(_,_,_,_,_,_,X7,_,_).
-hasType(node_15, X8) :- main_typechecks(_,_,_,_,_,_,_,X8,_).
-hasType(node_16, X9) :- main_typechecks(_,_,_,_,_,_,_,_,X9).
+hasType(node_17,X10) :- test_let_typechecks(X10,_,_,_,_,_,_,_,_,_,_,_,_).
+hasType(node_18,X11) :- test_let_typechecks(_,X11,_,_,_,_,_,_,_,_,_,_,_).
+hasType(node_19,X12) :- test_let_typechecks(_,_,X12,_,_,_,_,_,_,_,_,_,_).
+hasType(node_20,X13) :- test_let_typechecks(_,_,_,X13,_,_,_,_,_,_,_,_,_).
+hasType(node_21,X14) :- test_let_typechecks(_,_,_,_,X14,_,_,_,_,_,_,_,_).
+hasType(node_22,X15) :- test_let_typechecks(_,_,_,_,_,X15,_,_,_,_,_,_,_).
+hasType(node_23,X16) :- test_let_typechecks(_,_,_,_,_,_,X16,_,_,_,_,_,_).
+hasType(node_24,X17) :- test_let_typechecks(_,_,_,_,_,_,_,X17,_,_,_,_,_).
+hasType(node_25,X18) :- test_let_typechecks(_,_,_,_,_,_,_,_,X18,_,_,_,_).
+hasType(node_26,X19) :- test_let_typechecks(_,_,_,_,_,_,_,_,_,X19,_,_,_).
+hasType(node_27,X20) :- test_let_typechecks(_,_,_,_,_,_,_,_,_,_,X20,_,_).
+hasType(node_28,X21) :- test_let_typechecks(_,_,_,_,_,_,_,_,_,_,_,X21,_).
+hasType(node_29,X22) :- test_let_typechecks(_,_,_,_,_,_,_,_,_,_,_,_,X22).
 ```
 
