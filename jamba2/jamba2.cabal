@@ -30,6 +30,7 @@ executable jamba2
     Parser
     AST
     Eval
+    PrologParser
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities

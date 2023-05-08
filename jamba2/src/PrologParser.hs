@@ -51,7 +51,7 @@ prolog :: ParsecT
   L.Text () Data.Functor.Identity.Identity (M.Map Integer Type)
 prolog = do 
     res <- endBy line (optional endOfLine)
-    pure $ M.unions res
+    return $ M.unions res
 
 parseProlog :: L.Text -> Either ParseError (M.Map Integer Type)
 parseProlog = parse prolog ""
