@@ -188,20 +188,24 @@ type PLC = State TypingEnv
 
 genFuncConstraints :: PLC ()
 genFuncConstraints = do 
-  nodes <- gets currNodes
+  nodes <- M.toList <$> gets nodeType
   fName <- gets currFunc  
   let constraints = intercalate "," (dummyRegCons ++ dummyInstCons)
-  let lhs = fName ++ "_typechecks" ++ parens "X0,X1"
+  let lhs = fName ++ "_typechecks" ++ parens (intercalate "," $ snd <$>nodes)
   let f = lhs ++ providedThat ++ parens constraints ++ period
+  let nodeCons = concat $ nodeConstraint lhs <$> nodes
   p <- gets progCons
-  modify $ \st -> st{progCons = p++f}
+  modify $ \st -> st{progCons = p++f++nodeCons}
   pure ()
   where
-    dummyRegCons = ["X0 = X0", "X1 = X1"]
+    dummyRegCons = ["X0 = int", "X1 = X1"]
     dummyInstCons = []::[String]
     providedThat = ":-"
     period = ".\n"
     parens a = "("++ a ++")"
+    nodeConstraint :: String -> (Integer, TVar) -> String
+    nodeConstraint rhs (id, tvar) =
+      "hasType" ++ parens ("node_"++show id ++", " ++ tvar) ++ providedThat ++ rhs ++period
 
 
 addNode :: Integer -> PLC ()
@@ -213,9 +217,6 @@ addNode id = do
         Nothing -> M.insert id tvar m
         Just n -> error "Duplicate node ids are prohibited"
   modify $ \st -> st{nodeType = m'}
-  -- let m' = M.empty
-  -- st <- get
-  -- put st{nodeType = m'}
 
 freshTVar :: PLC TVar
 freshTVar = do 
@@ -233,18 +234,26 @@ freshNodeId = do
 data DummyAST = Node DummyAST DummyAST
  | Leaf
 
-userAstPass :: DummyAST -> PLC DummyAST
-userAstPass (Node left right) = do
+data DummyProgram = Dummy [(String,DummyAST)]
+
+userAstPass :: DummyProgram -> PLC DummyProgram
+userAstPass (Dummy []) = pure $ Dummy []
+userAstPass (Dummy (h:t)) = do
+                    _ <- userTopDef (snd h)
+                    genFuncConstraints
+                    userAstPass $ Dummy t
+
+userTopDef :: DummyAST -> PLC DummyAST
+userTopDef (Node left right) = do
   -- do something to modify state!
   id <- freshNodeId
   addNode id
-  left' <- userAstPass left
-  right' <- userAstPass right 
+  left' <- userTopDef left
+  right' <- userTopDef right 
   return (Node left' right')
-userAstPass Leaf = do id <- freshNodeId
-                      addNode id
-                      genFuncConstraints
-                      return Leaf
+userTopDef Leaf = do id <- freshNodeId
+                     addNode id
+                     return Leaf
     
 
 main :: IO ()
@@ -254,7 +263,7 @@ main = do
     [] -> die "Error:  must input a file name.\n"
     [filename] -> do
       -- testing constraint generation
-      let ast = Node (Node Leaf Leaf) (Node Leaf Leaf)
+      let ast = Dummy [("jambaJuice", Node (Node Leaf Leaf) (Node Leaf Leaf))]
       let x = typecheck ast userAstPass
       print $ show x
       -- testing constraint generation
