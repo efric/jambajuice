@@ -4,7 +4,9 @@ For reference:
 
 ![image info](./slide_59.png)
 
-1) App rule
+![image info](./TAPL_page_144.png)
+
+1. App rule
 
    ```
    App Expr Expr
@@ -29,7 +31,7 @@ For reference:
 
    
 
-2) Let rule
+2. Let rule
 
    ```
    Let Var Expr Expr
@@ -51,7 +53,26 @@ For reference:
 
    
 
-3) Var Rule
+3. Lambda Rule
+
+   ```
+   Lam Var Expr
+   (Lam (Var "someName" :: X1) (arg2 :: X2)) :: X3
+   ```
+
+   The type of a lambda is a function that takes one input and returns one output. Since this Lambda takes in `"someName"` and returns the expression represented by `arg2`, we can say it takes in the type of `"someName"` and returns the type of `arg2`.
+
+   Prolog Constraints:
+
+   ```
+   arrow(X3),
+   fst(X3,X1),
+   snd(X3,X2).
+   ```
+
+   
+
+4. Var Rule
 
    ```
    (Var "someName") :: X1
@@ -101,8 +122,6 @@ For reference:
      "someName" | node_id | Arg
      ```
 
-     
-
      Then we know "someName" was defined by a lambda expression and cannot be polymorphic. Therefore this instance of "someName" must be the same as the type of node_id.
 
      Prolog Constraints:
@@ -111,7 +130,7 @@ For reference:
      X1 = J.
      ```
 
-4) Primitive Rule
+5. Primitive Rule
 
    ```
    (Lit 5) :: X2
@@ -125,8 +144,8 @@ For reference:
 
    
 
-5) Lambda Rule?
+6. Instantiation in more detail?
 
-6) Fix operator???
+7. Fix operator???
 
    

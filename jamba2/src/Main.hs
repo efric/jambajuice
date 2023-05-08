@@ -34,7 +34,7 @@ main = do
       case parseModule contents of
         (Left err) -> die $ show err
         (Right ast) -> do
-          -- print ast
+          print ast
           let eval = foldl' evalDef emptyTmenv ast
           case Map.lookup mainfn eval of
             Just v -> print v
