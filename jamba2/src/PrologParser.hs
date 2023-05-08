@@ -1,4 +1,6 @@
-module PrologParser where
+module PrologParser (
+    parseProlog
+) where
 
 import qualified Data.Map as M
 import qualified Data.Text.Lazy as L
@@ -21,8 +23,8 @@ data Type = Type String | Arrow Type Type deriving Show
 
 singletype :: Parser Type
 singletype = do
-    types <- many alphaNum
-    return $ Type types
+    stype <- many alphaNum
+    return $ Type stype
 
 arrow :: Parser Type
 arrow = do
