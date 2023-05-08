@@ -26,30 +26,24 @@ singletype = do
 
 arrow :: Parser Type
 arrow = do
-    input <- many alphaNum
-    char ','
+    input <- many alphaNum <* char ','
     output <- try arrowtype <|> singletype
     return $ Arrow (Type input) output
 
 arrowtype :: Parser Type
-arrowtype = do
-    char '['
-    types <- arrow
-    char ']'
-    return types
+arrowtype = char '[' *> arrow <* char ']'
 
 types :: Parser Type
 types = try arrowtype <|> singletype
 
 line :: Parser (M.Map Integer Type)
 line = do
-    node <- many alphaNum *> char '_' *> many digit
-    space
+    node <- many alphaNum *> char '_' *> many digit <* space
     M.singleton (read node) <$> types
 
 prolog :: ParsecT
   L.Text () Data.Functor.Identity.Identity (M.Map Integer Type)
-prolog = do 
+prolog = do
     res <- endBy line (optional endOfLine)
     return $ M.unions res
 
