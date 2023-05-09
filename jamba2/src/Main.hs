@@ -9,6 +9,9 @@ import Control.Monad.State.Strict ( MonadIO(liftIO) )
 import Eval ( TermEnv, emptyTmenv, runEval )
 import AST ( Expr )
 import Data.List (foldl')
+import qualified Data.Map as M
+
+import PrologParser (parseProlog)
 
 usage :: String
 usage = "./src/Main tests/examples/p1.jj"
@@ -31,14 +34,21 @@ main = do
     [filename] -> do
       contents <- liftIO $ L.readFile filename
 
-      case parseModule contents of
+      case parseProlog contents of
         (Left err) -> die $ show err
-        (Right ast) -> do
-          -- print ast
-          let eval = foldl' evalDef emptyTmenv ast
-          case Map.lookup mainfn eval of
-            Just v -> print v
-            Nothing -> die $ "No main function (" ++ mainfn ++ ") in file\n"
+        (Right ans) -> do
+          print ans
           pure ()
+
+
+      -- case parseModule contents of
+      --   (Left err) -> die $ show err
+      --   (Right ast) -> do
+      --     -- print ast
+      --     let eval = foldl' evalDef emptyTmenv ast
+      --     case Map.lookup mainfn eval of
+      --       Just v -> print v
+      --       Nothing -> die $ "No main function (" ++ mainfn ++ ") in file\n"
+      --     pure ()
 
     _ -> die $ "Error: incorrect usage.\n Example usage:\n"  ++ usage
