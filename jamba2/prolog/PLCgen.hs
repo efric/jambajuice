@@ -23,6 +23,10 @@ import Control.Monad.State.Lazy (
 import qualified Data.Map as M
 import Control.Arrow (ArrowChoice(left))
 import Data.List (intercalate)
+import qualified Data.Set as S
+import Distribution.Compat.Graph (Node)
+import Control.Monad.Trans.Accum (add)
+
 
 {- | Library for Hindley-Milner Prolog Constraint Generation
 
@@ -133,21 +137,23 @@ type IsTypeScheme = Bool
 
 type TVar = String
 
-data Type = String 
+type NodeID = Integer
+
+data Type = String
  | Arrow Type Type
  deriving (Show)
 
 data TypingEnv = TypingEnv
   { -- | 'nodeType' maps node id to its type variable
-    nodeType :: M.Map Integer TVar
+    nodeType :: M.Map NodeID TVar
   , -- | 'funcInfo' maps a built-in function name to its type
     funcInfo :: M.Map String Type
   , -- | 'varInfo' maps an identifier to its node id and type status; scope sensitive
-    varInfo :: [M.Map String (Integer, IsTypeScheme)]
+    varInfo :: [M.Map String (NodeID, IsTypeScheme)]
   , -- | 'suff' fresh suffix to append to new type var to make it unique
-    suff :: Integer
+    suff :: NodeID
   , -- | 'id_user' fresh id number to assign to node; helper for user
-    id_user :: Integer
+    id_user :: NodeID
     -- | 'langcons' lanuage specific contraints to emit
   , langCons :: String
     -- | 'progCons' program specific constraints to emit
@@ -155,13 +161,15 @@ data TypingEnv = TypingEnv
     -- | 'currFunc' the name of the current function we are typechecking
   , currFunc :: String
   -- | 'currNodes' all the nodes in the subtree of function currFunc
-  , currNodes :: [Integer]
+  , currNodes :: S.Set NodeID
+  -- | 'currRoot' the node id of the root of currFunc's subtree
+  , currRoot :: NodeID
     -- | 'regCons' regular constraints associated with currFunc
   , regCons :: [String]
     -- | 'instCons' instantiation constraints associated with currFunc
   , instCons :: String
     -- | 'results' maps node id to their resolved type
-  , results :: M.Map Integer Type
+  , results :: M.Map NodeID Type
   }
   deriving (Show)
 
@@ -170,7 +178,7 @@ typecheck :: p -> (p -> PLC p) -> TypingEnv
 typecheck root pass = runComp (pass root)
 
 runComp :: PLC a -> TypingEnv
-runComp a = 
+runComp a =
   execState a TypingEnv { nodeType = M.empty
                         , funcInfo = M.empty
                         , varInfo = []
@@ -178,37 +186,60 @@ runComp a =
                         , id_user = 0
                         , langCons = ""
                         , progCons = ""
-                        , currFunc = "jambaJuice"
-                        , currNodes = []
+                        , currFunc = ""
+                        , currNodes = S.empty
+                        , currRoot = 0
                         , regCons = []
                         , instCons = []
                         , results = M.empty }
 
 type PLC = State TypingEnv
 
-genFuncConstraints :: PLC ()
-genFuncConstraints = do 
-  nodes <- M.toList <$> gets nodeType
-  fName <- gets currFunc  
-  let constraints = intercalate "," (dummyRegCons ++ dummyInstCons)
-  let lhs = fName ++ "_typechecks" ++ parens (intercalate "," $ snd <$>nodes)
-  let f = lhs ++ providedThat ++ parens constraints ++ period
-  let nodeCons = concat $ nodeConstraint lhs <$> nodes
+getType :: NodeID -> PLC TVar
+getType id = do
+  m <- gets nodeType
+  case M.lookup id m of
+    (Just tvar) -> pure tvar
+    _ -> error $ "Could not find a type var associated with node id " ++ show id
+
+genFuncConstraints :: PLC () -- MESSY; TODO: CLEAN UP!
+genFuncConstraints = do
+  m <- gets nodeType
+  allNodes <- M.toList <$> gets nodeType
+  addNodesToFunc (fst <$> allNodes) -- change later
+  fNodes <- S.toList <$> gets currNodes
+  fNodeTVars <- mapM getType fNodes
+  let nodes = zip fNodes fNodeTVars
+  fName <- gets currFunc
+  rootId <- gets currRoot
+  let (Just rootTVar) =  M.lookup rootId m
+  -- z <- M.lookup <$> (gets currRoot:: PLC NodeID) <*> gets nodeType
+  -- case z of Just rootTVar -> 
+  -- <*> gets nodeType
+  -- let w = ((gets nodeType) :: (PLC (M.Map NodeID TVar)))
+  let rhs = intercalate "," (dummyRegCons ++ dummyInstCons)
+      lhs = fName ++ "_typechecks" ++ parens (intercalate "," $ snd <$>nodes)
+      f = lhs ++ providedThat ++ parens rhs ++ period
+      nodeCons = concat $ nodeConstraint lhs <$> nodes
+      f2 = hasType ++ parens (fName ++ comma ++ rootTVar) ++ providedThat ++ lhs ++ period
+      f3 = "isTopLevelDef" ++ parens fName ++ period
   p <- gets progCons
-  modify $ \st -> st{progCons = p++f++nodeCons}
+  modify $ \st -> st{progCons = p++f++f2++f3 ++nodeCons}
   pure ()
   where
     dummyRegCons = ["X0 = int", "X1 = X1"]
     dummyInstCons = []::[String]
     providedThat = ":-"
     period = ".\n"
+    comma = " , "
     parens a = "("++ a ++")"
-    nodeConstraint :: String -> (Integer, TVar) -> String
+    hasType = "hasType"
+    nodeConstraint :: String -> (NodeID, TVar) -> String
     nodeConstraint rhs (id, tvar) =
-      "hasType" ++ parens ("node_"++show id ++", " ++ tvar) ++ providedThat ++ rhs ++period
+      hasType ++ parens ("node_"++show id ++ comma ++ tvar) ++ providedThat ++ rhs ++period
 
-
-addNode :: Integer -> PLC ()
+-- User API func
+addNode :: NodeID -> PLC ()
 addNode id = do
   -- error "inside add node!"
   m <- gets nodeType
@@ -218,29 +249,150 @@ addNode id = do
         Just n -> error "Duplicate node ids are prohibited"
   modify $ \st -> st{nodeType = m'}
 
+{- | Remove binder from current scope
+
+if scope layer is empty after removing name, pop scope layer as well -}
+popBinder :: String -> PLC ()
+popBinder nm = do
+  tables <- gets varInfo
+  case tables of 
+    [] -> error "Trying to remove binder from an empty scope"
+    (h:tl) -> do
+      let h' = M.delete nm h
+      let tables' = if null h' then tl else h' : tl
+      modify $ \st -> st{varInfo = tables'}
+
+
+{- | Add binder to current scope
+
+if binder is already present in current scope, add a new scope layer and add it there. -}
+addLocal :: String -> NodeID -> IsTypeScheme -> PLC ()
+addLocal nm id status = do
+  tables <- gets varInfo
+  case tables of
+    [] -> do           -- Case I: empty list of tables
+      let tbl = M.fromList [(nm,(id, status))]
+      let tables' = tbl : tables
+      modify $ \st -> st{varInfo= tables'}
+    (h:tl) -> do       -- Case II: at least one table!
+      case M.lookup nm h of
+        (Just v) -> do -- case II.1: name present in current layer, 
+                       --            so need to add another layer.
+          let tbl = M.fromList [(nm,(id, status))]
+          let tables' = tbl : h : tl
+          modify $ \st -> st{varInfo= tables'}
+        _ -> do        -- case II.2: nm not present in current layer
+          let h' = M.insert nm (id, status) h 
+          modify $ \st -> st{varInfo = h':tl}
+
+
+{- | Return binder info from shallowest scope.
+
+ binder is either a local var/func, a built-in func, or a top-level func -}
+lookupByName :: String -> PLC (Either (NodeID, IsTypeScheme) String)
+lookupByName nm = do
+  -- 1) first, look in local var tables
+  tables <- gets varInfo
+  searchRes <- lookupLocal nm tables
+  case searchRes of
+    (Just info) -> pure $ Left info
+  -- 2) next, look in built-in funcs tables
+  -- 3) otherwise, assume the nm refers to a top level function?
+  -- in both 2) and 3), would end up just returning name,
+  -- so let's do that instead of checking the built-in func table.
+    _ -> pure $ Right nm
+  pure $ Right nm
+  where lookupLocal :: String -> [M.Map String (NodeID, IsTypeScheme)]-> PLC (Maybe (NodeID, IsTypeScheme))
+        lookupLocal nm tables = do
+          case tables of
+            [] -> pure Nothing -- base case
+            (h:tl) -> do 
+              case M.lookup nm h of
+                (Just info) -> pure $ Just info -- found in layer h!
+                _ -> lookupLocal nm tl          -- recurse on deeper layers tl
+          
+
 freshTVar :: PLC TVar
-freshTVar = do 
+freshTVar = do
   suff <- gets suff
   modify $ \st -> st {suff = suff + 1}
   return ("X" ++ show suff)
 
-freshNodeId :: PLC Integer
+
+-- must be inside some function to generate typing constraints. right??
+checkInsideFunc :: PLC ()
+checkInsideFunc = do
+  cf <- gets currFunc
+  if cf == "" then error "need to be inside a function to generate type constraints!"
+  else pure ()
+
+--insert :: Ord a => a -> Set a -> Set a
+addNodesToFunc :: [NodeID] -> PLC ()
+addNodesToFunc [] = pure ()
+addNodesToFunc nodes = do
+  s <- gets currNodes
+  let x = foldl (flip S.insert) s nodes
+  modify $ \st -> st {currNodes = x}
+  
+ 
+       
+
+
+-- | User API func; get a fresh node id to assign to an AST node
+freshNodeId :: PLC NodeID
 freshNodeId = do
   u <- gets id_user
   modify $ \st -> st {id_user = u + 1}
   return u
 
+-- | User API func; announce we are entering a function we want to typecheck
+enterFunc :: String -> NodeID -> PLC ()
+enterFunc entering root = do
+  modify $ \st -> st {currFunc = entering, currRoot = root}
+
+-- | User API func; announce we are exiting the function we want to typecheck
+exitFunc :: PLC ()
+exitFunc = do
+  genFuncConstraints
+  clearFunctionFields
+
+-- | User API func; generate typing constraints for a lambda abstraction
+enterLam :: NodeID -> String -> NodeID -> NodeID -> PLC ()
+enterLam root binderName binder body = do
+  addLocal binderName binder False
+  checkInsideFunc
+  pure ()
+
+exitLam :: NodeID -> String -> NodeID -> NodeID -> PLC ()
+exitLam root binderName binder body = do
+  checkInsideFunc
+  popBinder binderName
+  pure ()
+
+-- | clear out all function fields so we are ready to typecheck a new function
+clearFunctionFields :: PLC ()
+clearFunctionFields = do
+  modify $ \st -> st { varInfo = []
+                     , currFunc = ""
+                     , currRoot = 0
+                     , regCons = []
+                     , instCons = []}
+
+
+
 
 data DummyAST = Node DummyAST DummyAST
  | Leaf
+
 
 data DummyProgram = Dummy [(String,DummyAST)]
 
 userAstPass :: DummyProgram -> PLC DummyProgram
 userAstPass (Dummy []) = pure $ Dummy []
 userAstPass (Dummy (h:t)) = do
+                    enterFunc "aFunction" 0
                     _ <- userTopDef (snd h)
-                    genFuncConstraints
+                    exitFunc
                     userAstPass $ Dummy t
 
 userTopDef :: DummyAST -> PLC DummyAST
@@ -249,12 +401,12 @@ userTopDef (Node left right) = do
   id <- freshNodeId
   addNode id
   left' <- userTopDef left
-  right' <- userTopDef right 
+  right' <- userTopDef right
   return (Node left' right')
 userTopDef Leaf = do id <- freshNodeId
                      addNode id
                      return Leaf
-    
+
 
 main :: IO ()
 main = do
@@ -270,7 +422,7 @@ main = do
 
       -- create the file names
       let constraintFile = filename ++ "-typing-constraints.pl"
-      let resultFile = filename ++ "-contraint-results.pl"   
+      let resultFile = filename ++ "-contraint-results.pl"
 
       -- read in template file contents
       prologue <- readFile "./templateFiles/prologue.pl" -- read in prologue
