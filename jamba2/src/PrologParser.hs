@@ -15,22 +15,29 @@ import Text.Parsec
       ParseError,
       try,
       ParsecT,
-      endOfLine, digit, optional )
+      endOfLine, digit, optional)
 import Text.Parsec.Text.Lazy (Parser)
 import qualified Data.Functor.Identity
 
 data Type = Type String | Arrow Type Type deriving Show
 
+anon :: Parser String
+anon = do
+    underscore <- char '_'
+    name <- many alphaNum
+    return (underscore : name)
+
 singletype :: Parser Type
 singletype = do
-    stype <- many alphaNum
+    stype <- try anon <|> many alphaNum
     return $ Type stype
 
 arrow :: Parser Type
 arrow = do
-    input <- many alphaNum <* char ','
+    input <- singletype
+    _ <- char ','
     output <- try arrowtype <|> singletype
-    return $ Arrow (Type input) output
+    return $ Arrow input output
 
 arrowtype :: Parser Type
 arrowtype = char '[' *> arrow <* char ']'
