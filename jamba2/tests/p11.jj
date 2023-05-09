@@ -1,0 +1,7 @@
+jambatime g x = {
+    x + g x
+}
+
+jambajuice = {
+    10 > 10
+}
