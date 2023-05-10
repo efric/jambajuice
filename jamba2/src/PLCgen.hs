@@ -388,7 +388,7 @@ genFuncConstraints :: PLC () -- MESSY; TODO: CLEAN UP!
 genFuncConstraints = do
   m <- gets nodeType
   allNodes <- M.toList <$> gets nodeType
-  addNodesToFunc (fst <$> allNodes) -- change later
+  -- addNodesToFunc (fst <$> allNodes) -- change later
   fNodes <- S.toList <$> gets currNodes
   fNodeTVars <- mapM getType fNodes
   let nodes = zip fNodes fNodeTVars
