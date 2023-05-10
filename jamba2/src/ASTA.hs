@@ -1,4 +1,4 @@
-module AST where
+module AnnotatedAST where
 
 type Var = String
 

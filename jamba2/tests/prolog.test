@@ -1,0 +1,7 @@
+node_1 [_234,_23123]
+node_2 int
+node_3 int
+node_4 [int,int]
+node_5 int
+node_6 [int,[int,[int,[int,int]]]]
+node_7 int

@@ -1,0 +1,27 @@
+idea: 
+
+library: 
+before first AST pass
+-- maybe we should have an API to do this easily
+fill in built in fns: one is keys: func name, values type Scheme
+
+first AST pass
+assign node_id 
+emit map keys: node id to type variables (just random names)
+
+one is keys: func name, values type Scheme
+
+data Scheme = Forall [String] [Strings]
+the type int -> int, that is the type scheme Forall [] ["int","int"]
+the type a -> bool, that is the the type scheme Forall ["A"] ["A","bool"]
+
+only enter this table for let/lambda (introducing binder) 
+one is keys: var name, values node id 
+
+let = node_1
+(x = 4) = node 2 
+(in 3 + x)
+let x = 4 in
+  3 + x              ---> node holding x must unify with the type of node 2
+
+programmer traverse AST and case on type of node and call library depending on type of node blah blah

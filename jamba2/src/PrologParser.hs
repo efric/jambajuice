@@ -1,5 +1,6 @@
 module PrologParser (
-    parseProlog
+    parseProlog,
+    Type
 ) where
 
 import qualified Data.Map as M

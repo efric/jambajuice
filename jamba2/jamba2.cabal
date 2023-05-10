@@ -25,12 +25,15 @@ executable jamba2
     , containers    
     , mtl           
     , transformers 
+    , process
   other-modules:
     Lexer
     Parser
     AST
     Eval
     PrologParser
+    PLCgen
+    AnnotatedAST
   ghc-options:         -Wall
                        -Wcompat
                        -Widentities
