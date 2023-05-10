@@ -1,0 +1,5 @@
+jambajuice = {
+    let sup = \x -> x + 2 in {
+        sup 3
+    }
+}

@@ -1,0 +1,3 @@
+jambajuice = {
+    (\x -> if (x true) {x 4} else {x 7}) (\y -> y)
+}

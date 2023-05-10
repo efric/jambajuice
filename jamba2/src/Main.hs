@@ -11,6 +11,7 @@ import Data.List (foldl')
 import qualified PLCgen as P
 import Control.Monad.State.Lazy
 import AnnotatedAST
+import PrologParser
 
 usage :: String
 usage = "./src/Main tests/examples/p1.jj"
@@ -184,20 +185,19 @@ main = do
     [filename] -> do
       contents <- liftIO $ L.readFile filename
 
+--      case parseProlog contents of
+--        (Left err) -> die $ show err
+--        (Right ans) -> do 
+--          print ans
+--          pure ()
+
       case parseModule contents of
         (Left err) -> die $ show err
         (Right ast) -> do
          -- print ast
-          --(a -> b -> a) -> a -> [b] -> a
-          -- let w = \(res,num) func -> (res : annotateExpr num func, )
           let threadThruUniqID :: ([(AExpr Integer, Integer)], Integer) -> Expr -> ([(AExpr Integer, Integer)], Integer)
               threadThruUniqID ([],_) e  = let res = annotateExpr 0 e in ([res], snd res)
               threadThruUniqID (prev,num) e = let res = annotateExpr num e in (res:prev, snd res)
-          -- let w = \(res,num) -> annotateExpr num
-          -- let z = foldl w (AVar 9999 "disappears", 0) (snd <$> ast)
-          -- let z = reverse .map fst.fst $ foldl threadThruUniqID ([], 0) (snd <$> ast)
-          -- let a = (annotateExpr 0) . snd <$> ast -- HOODLE
-          -- let b = fst <$> ast
           let c = zip (fst <$> ast) $ reverse .map fst.fst $ foldl threadThruUniqID ([], 0) (snd <$> ast)
          -- print c
           _ <- P.solve c traverseAST -- typechecking

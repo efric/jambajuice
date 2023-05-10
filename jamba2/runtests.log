@@ -1,0 +1,70 @@
+
+###### Testing p1
+stack run tests/p1.jj > out/p1.out
+diff -b out/p1.out tests/p1.out > out/p1.diff
+###### SUCCESS
+
+###### Testing p11
+stack run tests/p11.jj > out/p11.out
+diff -b out/p11.out tests/p11.out > out/p11.diff
+###### SUCCESS
+
+###### Testing p12
+stack run tests/p12.jj > out/p12.out
+diff -b out/p12.out tests/p12.out > out/p12.diff
+###### SUCCESS
+
+###### Testing p13
+stack run tests/p13.jj > out/p13.out
+diff -b out/p13.out tests/p13.out > out/p13.diff
+###### SUCCESS
+
+###### Testing p15
+stack run tests/p15.jj > out/p15.out
+diff -b out/p15.out tests/p15.out > out/p15.diff
+###### SUCCESS
+
+###### Testing p16
+stack run tests/p16.jj > out/p16.out
+diff -b out/p16.out tests/p16.out > out/p16.diff
+###### SUCCESS
+
+###### Testing p18
+stack run tests/p18.jj > out/p18.out
+diff -b out/p18.out tests/p18.out > out/p18.diff
+###### SUCCESS
+
+###### Testing p2
+stack run tests/p2.jj > out/p2.out
+diff -b out/p2.out tests/p2.out > out/p2.diff
+###### SUCCESS
+
+###### Testing p3
+stack run tests/p3.jj > out/p3.out
+diff -b out/p3.out tests/p3.out > out/p3.diff
+###### SUCCESS
+
+###### Testing p4
+stack run tests/p4.jj > out/p4.out
+diff -b out/p4.out tests/p4.out > out/p4.diff
+###### SUCCESS
+
+###### Testing p5
+stack run tests/p5.jj > out/p5.out
+diff -b out/p5.out tests/p5.out > out/p5.diff
+###### SUCCESS
+
+###### Testing p6
+stack run tests/p6.jj > out/p6.out
+diff -b out/p6.out tests/p6.out > out/p6.diff
+###### SUCCESS
+
+###### Testing p7
+stack run tests/p7.jj > out/p7.out
+diff -b out/p7.out tests/p7.out > out/p7.diff
+###### SUCCESS
+
+###### Testing p8
+stack run tests/p8.jj > out/p8.out
+diff -b out/p8.out tests/p8.out > out/p8.diff
+###### SUCCESS

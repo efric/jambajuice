@@ -1,14 +1,19 @@
 jambatime fib n = {
-    if (n == 0) { 0 } 
+    if n == 0 { 0 } 
     else {
-        if (n == 1) { 1 } 
+        if n == 1 { 1 } 
         else { fib (n - 1) + fib (n - 2) }
     }
 }
 
+jambatime fact a = {
+    if a == 0 { 1 }
+    else { a * fact (a - 1) }
+}
+
 jambajuice = {
     let hi = fib 15 in {
-        let sup = 5 in {
+        let sup = fact 5 in {
             hi + sup
         }
     }

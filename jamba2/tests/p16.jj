@@ -1,0 +1,5 @@
+jambajuice = {
+    let sup = \x -> x in {
+        if (sup true) {sup 4} else {sup 7}
+    }
+}

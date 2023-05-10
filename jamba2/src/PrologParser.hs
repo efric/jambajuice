@@ -35,7 +35,7 @@ singletype = do
 
 arrow :: Parser Type
 arrow = do
-    input <- singletype
+    input <- try arrowtype <|> singletype
     _ <- char ','
     output <- try arrowtype <|> singletype
     return $ Arrow input output
