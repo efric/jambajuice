@@ -1,0 +1,15 @@
+id x = {
+    x
+}
+
+jambajuice = {
+    let y = id 4 in {
+        let z = id false in {
+        if z {
+            99
+        } else {
+           y
+        }
+    }
+    }
+}
