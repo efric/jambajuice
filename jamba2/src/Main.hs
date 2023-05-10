@@ -180,9 +180,18 @@ main = do
         (Left err) -> die $ show err
         (Right ast) -> do
           print ast
-          let a = annotateExpr . snd <$> ast
+          --(a -> b -> a) -> a -> [b] -> a
+          -- let w = \(res,num) func -> (res : annotateExpr num func, )
+          let helper :: ([(AExpr Integer, Integer)], Integer) -> Expr -> ([(AExpr Integer, Integer)], Integer)
+              helper ([],_) e  = let res = annotateExpr 0 e in ([res], snd res)
+              helper (prev,num) e = let res = annotateExpr num e in (res:prev, snd res)
+          -- let w = \(res,num) -> annotateExpr num
+          -- let z = foldl w (AVar 9999 "disappears", 0) (snd <$> ast)
+          let z = reverse .map fst.fst $ foldl helper ([], 0) (snd <$> ast)
+          let a = (annotateExpr 0) . snd <$> ast -- HOODLE
           let b = fst <$> ast
-          let c = zip b a
+          let c = zip b z
+          print c
           results <- P.solve c traverseAST -- typechecking
           let eval = foldl' evalDef emptyTmenv ast
           case Map.lookup mainfn eval of

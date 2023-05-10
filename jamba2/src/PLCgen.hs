@@ -142,7 +142,7 @@ addNode id = do
   tvar <- freshTVar
   let m' = case M.lookup id m of
         Nothing -> M.insert id tvar m
-        Just n -> error "Duplicate node ids are prohibited"
+        Just n -> error $"Duplicate node ids are prohibited! " ++ "bad id:"++show id ++ show m
   -- let x = M.fromList [(435345,"XXX")]
   modify $ \st -> st{nodeType = m'}
 
@@ -536,8 +536,8 @@ addLocal nm id status = do
 {- | Return binder info from shallowest scope.
 
  binder is either a local var/func, a built-in func, or a top-level func -}
-lookupByName :: String -> PLC (Either (NodeID, IsTypeScheme) String)
-lookupByName nm = do
+lookupByName2 :: String -> PLC (Either (NodeID, IsTypeScheme) String)
+lookupByName2 nm = do
   -- 1) first, look in local var tables
   tables <- gets varInfo
   let searchRes = M.lookup nm (head tables)
@@ -548,41 +548,31 @@ lookupByName nm = do
   -- in both 2) and 3), would end up just returning name,
   -- so let's do that instead of checking the built-in func table.
     _ -> pure $ Right nm
-  --  pure $ Right nm
-  -- where lookupLocal :: String -> [M.Map String (NodeID, IsTypeScheme)]-> PLC (Maybe (NodeID, IsTypeScheme))
-  --       lookupLocal nm tables = do
-  --         case tables of
-  --           [] -> pure Nothing -- base case
-  --           [h] -> do
-  --             case M.lookup nm h of
-  --               (Just info) -> pure $ Just info -- found in layer h!
-  --               _ -> pure Nothing         -- recurse on deeper layers tl
-  --           _ -> pure Nothing
+ 
 
--- {- | Return binder info from shallowest scope.
+{- | Return binder info from shallowest scope.
 
---  binder is either a local var/func, a built-in func, or a top-level func -}
--- lookupByName :: String -> PLC (Either (NodeID, IsTypeScheme) String)
--- lookupByName nm = do
---   -- 1) first, look in local var tables
---   tables <- gets varInfo
---   searchRes <- lookupLocal nm tables
---   case searchRes of
---     (Just info) -> pure $ Left info
---   -- 2) next, look in built-in funcs tables
---   -- 3) otherwise, assume the nm refers to a top level function?
---   -- in both 2) and 3), would end up just returning name,
---   -- so let's do that instead of checking the built-in func table.
---     _ -> pure $ Right nm
---   pure $ Right nm
---   where lookupLocal :: String -> [M.Map String (NodeID, IsTypeScheme)]-> PLC (Maybe (NodeID, IsTypeScheme))
---         lookupLocal nm tables = do
---           case tables of
---             [] -> pure Nothing -- base case
---             (h:tl) -> do
---               case M.lookup nm h of
---                 (Just info) -> pure $ Just info -- found in layer h!
---                 _ -> lookupLocal nm tl          -- recurse on deeper layers tl
+ binder is either a local var/func, a built-in func, or a top-level func -}
+lookupByName :: String -> PLC (Either (NodeID, IsTypeScheme) String)
+lookupByName nm = do
+  -- 1) first, look in local var tables
+  tables <- gets varInfo
+  searchRes <- lookupLocal nm tables
+  case searchRes of
+    (Just info) -> pure $ Left info
+  -- 2) next, look in built-in funcs tables
+  -- 3) otherwise, assume the nm refers to a top level function?
+  -- in both 2) and 3), would end up just returning name,
+  -- so let's do that instead of checking the built-in func table.
+    _ -> pure $ Right nm
+  where lookupLocal :: String -> [M.Map String (NodeID, IsTypeScheme)]-> PLC (Maybe (NodeID, IsTypeScheme))
+        lookupLocal nm tables = do
+          case tables of
+            [] -> pure Nothing -- base case
+            (h:tl) -> do
+              case M.lookup nm h of
+                (Just info) -> pure $ Just info -- found in layer h!
+                _ -> lookupLocal nm tl          -- recurse on deeper layers tl
 
 -- | Return a fresh type variable (used by addNode)
 freshTVar :: PLC TVar

@@ -23,9 +23,9 @@ type ID = State Integer
 --  where runComp :: CheckPure a -> IsPure
 --        runComp a = execState a True
 
-annotateExpr :: Expr -> AExpr Integer
-annotateExpr = runComp . giveId
- where runComp a = evalState a 0
+annotateExpr :: Integer -> Expr -> (AExpr Integer, Integer)
+annotateExpr initial = runComp . giveId
+ where runComp a = runState a initial
 
 getFreshId :: ID Integer
 getFreshId = do
