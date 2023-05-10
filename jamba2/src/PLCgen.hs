@@ -78,7 +78,7 @@ data TypingEnv = TypingEnv
     -- | 'regCons' regular constraints associated with currFunc
   , regCons :: [String]
     -- | 'instCons' instantiation constraints associated with currFunc
-  , instCons :: String
+  , instCons :: [String]
     -- | 'results' maps node id to their resolved type
   , results :: M.Map NodeID Type
   }
@@ -253,6 +253,7 @@ genVar :: String -> NodeID -> PLC ()
 genVar nm myNid = do
   m <- gets nodeType
   let (Just myTVar) = M.lookup myNid m
+  inst <- gets instCons
   rg <- gets regCons
   y <- lookupByName nm
   tbl <- gets varInfo
@@ -262,14 +263,14 @@ genVar nm myNid = do
                             then do -- let binder
                               let (Just tvar) = M.lookup nid m
                               let constraint = "copy_term" ++ parens (tvar ++","++myTVar)
-                              modify $ \st -> st {regCons = rg ++ [constraint]}
+                              modify $ \st -> st {instCons = inst ++ [constraint]}
                             else do -- lambda binder
                               let (Just tvar) = M.lookup nid m
                               let constraint = myTVar ++ "=" ++ tvar
                               modify $ \st -> st {regCons = rg ++ [constraint]}
     _ -> do -- built in func or top level func
       let constraint = "instantiates" ++ parens (myTVar++","++ nm)
-      modify $ \st -> st {regCons = rg ++ [constraint]}
+      modify $ \st -> st {instCons = inst ++ [constraint]}
 
 
 
@@ -461,6 +462,7 @@ genFuncConstraints = do
   fName <- gets currFunc
   rootId <- gets currRoot
   rg <- gets regCons
+  inst <- gets instCons
 
   case M.lookup rootId m of
     Nothing -> error $ "u got jamba'd" ++ fName ++ (show rootId) ++ "ALL NODES" ++ show allNodes ++ "map is " ++ show m
@@ -472,7 +474,7 @@ genFuncConstraints = do
   -- case z of Just rootTVar -> 
   -- <*> gets nodeType
   -- let w = ((gets nodeType) :: (PLC (M.Map NodeID TVar)))
-      let rhs = intercalate "," (rg ++ dummyInstCons)
+      let rhs = intercalate "," (rg ++ inst)
           lhs = fName ++ "_typechecks" ++ parens (intercalate "," $ snd <$>nodes)
           f = lhs ++ providedThat ++ parens rhs ++ period
           nodeCons = concat $ nodeConstraint lhs <$> nodes
