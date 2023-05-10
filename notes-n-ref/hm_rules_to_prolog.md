@@ -144,8 +144,43 @@ For reference:
 
    
 
-6. Instantiation in more detail?
+6. Fix Rule
 
-7. Fix operator???
+   ```
+   (fix (Lam (Var "h")::X1 Expr :: X2)::X3 )::X4
+   ```
+
+   ```
+   arrow(X1),
+   snd(X3,X4).
+   ```
+
+   
+
+7. Instantiation in more detail?
+   ```
+   % generate a type scheme for a top level definition if possible
+   hasTypeScheme(F, FORALL, T) :- generalize(F, FORALL, T).
+   
+   % convert the type of a top level definition into a type scheme
+   generalize(FUNC_I, FORALL, T):- hasType(FUNC_I, T), include(var, T, FORALL).
+   generalize(FUNC_I, [], T):- hasType(FUNC_I, T), T\=[], T\=[H|T].
+   
+   % convert the type scheme of a top-level definition into a type
+   instantiates(Y,F) :- hasTypeScheme(F, FORALL, T), Y=T.
+   % we use copy_term/2 to instantiate the type scheme of a local definition (let bindings)
+   ```
+
+   TODO: explain what's going on >.<"
+
+8. Helper Constraints
+
+   ```
+   arrow([_,_]).
+   snd(A,B):-A=[H1,H2],B=H2.
+   fst(A,B):-A=[H1,H2],B=H1.
+   ```
+
+   
 
    

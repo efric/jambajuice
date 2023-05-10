@@ -128,8 +128,18 @@ defConstraintsNode self@(AIf a e1 e2 e3) = do
  defConstraintsNode e1 
  defConstraintsNode e2
  defConstraintsNode e3
-defConstraintsNode (AFix a e1) = do
- defConstraintsNode e1 
+defConstraintsNode (AFix a e3@(ALam a2 e1 _)) = do
+  P.genFix a (extractId e3) ( extractId e1)
+  defConstraintsNode e3
+--  x4 <- P.getType a
+--  x3 <- P.getType (extractId e3)
+--  x1 <- P.getType (extractId e1)
+  -- x4 <- (getType a)
+  -- pure ()
+
+defConstraintsNode (AFix a e1) = error "fix only takes lambdas right now"
+-- defConstraintsNode (AFix a e1) = do
+--  defConstraintsNode e1 
 
 addASTNode :: AExpr Integer -> P.PLC ()
 addASTNode (AVar a _) = P.addNode a
@@ -196,7 +206,7 @@ main = do
           let eval = foldl' evalDef emptyTmenv ast
           case Map.lookup mainfn eval of
             Just v -> print v
-            Nothing -> die $ "No main function (" ++ mainfn ++ ") in file\n"
+            Nothing -> die $ "No jambajuice function (" ++ mainfn ++ ") in file\n"
           pure ()
 
     _ -> die $ "Error: incorrect usage.\n Example usage:\n"  ++ usage

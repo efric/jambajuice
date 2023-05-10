@@ -18,7 +18,9 @@ module PLCgen (
   genVar,
   unifyNodeNode,
   unifyNodeType,
-  enterApp
+  enterApp,
+  getType,
+  genFix
 ) where
 
 import System.Environment (getArgs)
@@ -179,6 +181,18 @@ enterLam self binderName binderID body = do
   rg <- gets regCons
   modify $ \st -> st {regCons = rg ++ [cons1, cons2, cons3]}
   pure ()
+
+genFix :: NodeID -> NodeID -> NodeID -> PLC ()
+genFix self lam lamBinder = do
+  checkInsideFunc
+  x4 <- getType self
+  x3 <- getType lam
+  x1 <- getType lamBinder
+  let fix = output ++ parens (x3 ++ "," ++ x4)
+  let fixLam = arrow ++ parens x1
+  rg <- gets regCons
+  modify $ \st -> st {regCons = rg ++ [fix, fixLam]}
+  return ()
 
 enterApp :: NodeID -> NodeID -> NodeID -> PLC ()
 enterApp self binderID body = do
