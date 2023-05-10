@@ -22,15 +22,10 @@ module PLCgen (
   genFix
 ) where
 
-import System.Environment (getArgs)
 import System.Exit (die)
 import System.IO
 import System.Process
-import Control.Monad (when, unless)
 import Control.Monad.State.Lazy (
-  MonadState (put, get),
-  StateT (..),
-  evalStateT,
   gets,
   modify, State, execState, MonadIO (liftIO),
  )
@@ -40,6 +35,7 @@ import qualified Data.Set as S
 import Data.Char (isUpper)
 import PrologParser (parseProlog, Type)
 import qualified Data.Text.Lazy.IO as L
+
 
 {- | Library for Hindley-Milner Prolog Constraint Generation
 
@@ -137,14 +133,13 @@ freshNodeId = do
 
 -- User API func; report existence of node with assigned NodeID id
 addNode :: NodeID -> PLC ()
-addNode id = do
+addNode iD = do
   -- error "inside add node!"
   m <- gets nodeType
   tvar <- freshTVar
-  let m' = case M.lookup id m of
-        Nothing -> M.insert id tvar m
-        Just n -> error $"Duplicate node ids are prohibited! " ++ "bad id:"++show id ++ show m
-  -- let x = M.fromList [(435345,"XXX")]
+  let m' = case M.lookup iD m of
+        Nothing -> M.insert iD tvar m
+        Just _ -> error $ "Duplicate node ids are prohibited! " ++ "bad id:"++show iD ++ show m
   modify $ \st -> st{nodeType = m'}
 
 
@@ -152,8 +147,6 @@ addNode id = do
 enterFunc :: String -> NodeID -> PLC ()
 enterFunc entering root = do
   modify $ \st -> st {currFunc = entering, currRoot = root}
-  -- rt <- gets currRoot
-  -- error $ "the root is now" ++ (show rt)
 
 -- | User API func; announce we are exiting the function we want to typecheck
 exitFunc :: PLC ()
@@ -165,15 +158,11 @@ exitFunc = do
 enterLam :: NodeID -> String -> NodeID -> NodeID -> PLC ()
 enterLam self binderName binderID body = do
   checkInsideFunc
+  addNodesToFunc [self, binderID, body]
   addLocal binderName binderID False
-  -- TODO
-  -- arrow(X3),
-  --  fst(X3,X1),
-  --  snd(X3,X2).
-  m <- gets nodeType
-  let (Just x1) = M.lookup binderID m
-  let (Just x2) = M.lookup body m
-  let (Just x3) = M.lookup self m
+  x1 <- getType binderID
+  x2 <- getType body
+  x3 <- getType self
   let cons1 = arrow ++ parens x3
   let cons2 = input ++ parens (x3 ++ "," ++ x1)
   let cons3 = output ++ parens (x3 ++ "," ++ x2)
@@ -184,6 +173,7 @@ enterLam self binderName binderID body = do
 genFix :: NodeID -> NodeID -> NodeID -> PLC ()
 genFix self lam lamBinder = do
   checkInsideFunc
+  addNodesToFunc [self, lam, lamBinder]
   x4 <- getType self
   x3 <- getType lam
   x1 <- getType lamBinder
@@ -196,14 +186,10 @@ genFix self lam lamBinder = do
 enterApp :: NodeID -> NodeID -> NodeID -> PLC ()
 enterApp self binderID body = do
   checkInsideFunc
-  -- TODO
--- arrow(X1),
---   fst(X1,X2),
---   snd(X1, X3).
-  m <- gets nodeType
-  let (Just x1) = M.lookup binderID m
-  let (Just x2) = M.lookup body m
-  let (Just x3) = M.lookup self m
+  addNodesToFunc [self, binderID, body]
+  x1 <- getType binderID
+  x2 <- getType body
+  x3 <- getType self
   let cons1 = arrow ++ parens x1
   let cons2 = input ++ parens (x1 ++ "," ++ x2)
   let cons3 = output ++ parens (x1 ++ "," ++ x3)
@@ -225,32 +211,26 @@ exitLam binderName = do
 
 unifiesWith :: String -> String -> String
 unifiesWith a b = a ++ "=" ++ b
-
 arrow :: String
 arrow = "arrow"
 input :: String
 input = "fst"
 output :: String
 output = "snd"
+parens :: String -> String
+parens a = "("++ a ++")"
 
 enterLet :: NodeID -> String -> NodeID -> NodeID -> NodeID -> PLC ()
 enterLet self binderName binderID binderRHS body = do
   checkInsideFunc
+  addNodesToFunc [self, binderID, binderRHS, body]
   addLocal binderName binderID True
-  m <- gets nodeType
-  let (Just x1) = M.lookup binderID m
-  let (Just x2) = M.lookup binderRHS m
-  let (Just x3) = M.lookup body m
-  let (Just x4) = M.lookup self m
+  x1 <- getType  binderID
+  x2 <- getType binderRHS
+  x3 <- getType body
+  x4 <- getType  self
   rg <- gets regCons
   modify $ \st -> st {regCons = rg ++ [x1 `unifiesWith` x2, x4 `unifiesWith` x3]}
--- (Let ((Var "someName") :: X1) (arg2 :: X2) (arg3 :: X3)) :: X4
-  {-
-   X1 = X2,
-   X4 = X3.
-  -}
-  -- TODO
-  pure ()
 
 exitLet :: String -> PLC ()
 exitLet binderName = do
@@ -258,68 +238,58 @@ exitLet binderName = do
   popBinder binderName
   pure ()
 
-parens :: String -> String
-parens a = "("++ a ++")"
-
---lookupByName :: String -> PLC (Either (NodeID, IsTypeScheme) String)
 genVar :: String -> NodeID -> PLC ()
 genVar nm myNid = do
-  m <- gets nodeType
-  let (Just myTVar) = M.lookup myNid m
+  checkInsideFunc
+  myTVar <- getType myNid
   inst <- gets instCons
   rg <- gets regCons
-  y <- lookupByName nm
-  tbl <- gets varInfo
-  -- error $ "binder key is " ++ show nm ++ "value is " ++ show y ++ (show tbl)
-  case y of
+  info <- lookupByName nm
+  case info of
     (Left (nid, status)) -> if status
                             then do -- let binder
-                              let (Just tvar) = M.lookup nid m
+                              addNodesToFunc [nid, myNid]
+                              tvar <- getType  nid
                               let constraint = "copy_term" ++ parens (tvar ++","++myTVar)
                               modify $ \st -> st {instCons = inst ++ [constraint]}
                             else do -- lambda binder
-                              let (Just tvar) = M.lookup nid m
+                              addNodesToFunc [nid, myNid]
+                              tvar <- getType  nid
                               let constraint = myTVar ++ "=" ++ tvar
                               modify $ \st -> st {regCons = rg ++ [constraint]}
     _ -> do -- built in func or top level func
+      addNodesToFunc [myNid]
       let constraint = "instantiates" ++ parens (myTVar++","++ nm)
       modify $ \st -> st {instCons = inst ++ [constraint]}
 
 
 
--- genLit :: NodeID -> String -> PLC ()
--- genLit _ _ = pure () --TODO
-
 unifyNodeType :: NodeID -> String -> PLC ()
 unifyNodeType n t = do
-  m <- gets nodeType
+  checkInsideFunc
+  addNodesToFunc [n]
   rg <- gets regCons
-  let (Just n') = M.lookup n m
+  n' <- getType n
   let unified = n' ++ "="  ++ t
   let rg' = rg ++ [unified]
   modify $ \st -> st {regCons = rg'}
-  pure ()
+  
 
 unifyNodeNode :: NodeID -> NodeID -> PLC ()
 unifyNodeNode n1 n2 = do
-  m <- gets nodeType
+  checkInsideFunc
+  addNodesToFunc [n1,n2]
   rg <- gets regCons
-  let (Just n1') = M.lookup n1 m
-  let (Just n2') = M.lookup n2 m
+  n1' <- getType n1
+  n2' <- getType n2
   let unified = n1' ++ "="  ++ n2'
   let rg' = rg ++ [unified]
   modify $ \st -> st {regCons = rg'}
-  pure ()
+ 
 
 -- genUnifyTypeWithTypeScheme :: NodeID -> NodeID -> PLC ()
 -- genUnifyTypeWithTypeScheme _ _ = pure () -- TODO
 
--- generateFiles :: String -> IO()
--- generateFiles = do
---   return ()
--- runIOT :: Functor m => IOT m a -> IO (m a)
--- user needs to have a program type
--- needs to write a function from 
 solve :: a -> (a -> PLC a) -> IO (M.Map Integer Type)
 solve prog userPass = do
   let x = typecheck prog userPass
@@ -337,13 +307,13 @@ solve prog userPass = do
   hPutStrLn handle epilogue
   hClose handle
 
-  (Just writeEnd, Just readEnd, Just readErrEnd, ph) <- createProcess (proc "swipl" ["-q", "-s", constraintFile]){
+  (Just _, Just readEnd, Just _, _) <- createProcess (proc "swipl" ["-q", "-s", constraintFile]){
     std_out = CreatePipe,
     std_in = CreatePipe,
     std_err = CreatePipe}
   resHandle <- openFile resultFile WriteMode  -- open results file
-  results <- hGetContents readEnd             -- read from swipl
-  hPutStr resHandle results                   -- write out results
+  swiplOutput <- hGetContents readEnd             -- read from swipl
+  hPutStr resHandle swiplOutput                   -- write out results
   hClose resHandle                            -- close the results file 
   -- enter Eric's great parser!
   content_results <- liftIO $ L.readFile resultFile
@@ -356,64 +326,17 @@ solve prog userPass = do
         --error $ "\nWORKED YO\nbefore checking: "++ show (M.toList original) ++ "\n" ++ "after checking" ++ show (M.toList table)
       else error $ "\nFAILED YO\nbefore checking: "++ show (M.toList original) ++ "\n" ++ "after checking" ++ show (M.toList table)
      -- do cmp here; if different. print table
-{-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-jambajuice_typechecks(X0,X1,X2,X3):-(X1=bool,X2=X3,X0=X2,X0=X3,X1=bool,X2=int,X3=int).
-hasType(jambajuice , X0):-jambajuice_typechecks(X0,X1,X2,X3).
-isTopLevelDef(jambajuice).
-hasType(node_0 , X0):-jambajuice_typechecks(X0,X1,X2,X3).
-hasType(node_1 , X1):-jambajuice_typechecks(X0,X1,X2,X3).
-hasType(node_2 , X2):-jambajuice_typechecks(X0,X1,X2,X3).
-hasType(node_3 , X3):-jambajuice_typechecks(X0,X1,X2,X3).
-
-% output results of typechecking!
-:- initialization forall((hasType(X,Y),not(isTopLevelDef(X))), (write(X),write(' '), writeln(Y))),halt().
-
--}
-
-{-
- 5 + 6
- Op Add (Lit LInt 5) (Lit LInt 6)
- App (App (Var "Add") (Lit LInt 5)) (Lit LInt 6)
- 
- Op Binop Expr Expr
- (Op Binop X1   X2) X3
- X1 = X2  // unify
- X3 = int // unify
-
- Let id = lam y. y in isNum (id 2) && isNum (id False)
-     X1                        X4                X5
-  table: "id", IsScheme =true
-  X4 = type (id) but we check if id is a type scheme
-  instead of this, X4 = X1 we do
-  copy_term(X1,X4) -- X4 must unify with a copy of X1 with fresh type variables
-  
- // unify with instantiated type scheme
-
-^ true for Add | Sub | Mul
-
-Op Binop Expr Expr
-Eql | Neq
-X1 = X2
-X3 = bool
-
-If Expr Expr Expr
-(If X1    X2   X3) X4
-X1 = bool
-X2 = X3
-X4=X2=X3
--}
 
 --                                                                                              |
 -- ------------------------------------------------------------------------------------------ --|
 
 -- | Given a node id, return its type variable
 getType :: NodeID -> PLC TVar
-getType id = do
+getType iD = do
   m <- gets nodeType
-  case M.lookup id m of
+  case M.lookup iD m of
     (Just tvar) -> pure tvar
-    _ -> error $ "Could not find a type var associated with node id " ++ show id
+    _ -> error $ "Could not find a type var associated with node id " ++ show iD
 
 {-
 % generate a type scheme for a top level definition if possible
@@ -440,17 +363,16 @@ genBuiltInConstraints = do
   funcs <- M.toList <$> gets funcInfo
   langConz <- gets langCons
   let langCons' = langConz ++ concat (genBuiltInFunc <$> funcs)
-  error $ show langCons'
+  -- error $ show langCons'
   modify $ \st -> st{langCons = langCons'}
   return ()
   where
     period = ".\n"
     hasTypeScheme = "hasTypeScheme"
-    parens a = "("++ a++ ")"
     brackets a = "["++a++"]"
     isTypeVar :: String -> Bool
     isTypeVar [] = error "type should never be the empty string"
-    isTypeVar (h:tl) = h == '_' || isUpper h
+    isTypeVar (h:_) = h == '_' || isUpper h
     nestedArrow :: String -> String -> String
     nestedArrow a b = brackets $ a ++ "," ++ b
     genBuiltInFunc :: (String, [String]) -> String
@@ -460,8 +382,6 @@ genBuiltInConstraints = do
           vars = intercalate "," freeVars
       in
         hasTypeScheme ++ parens (nm ++ "," ++ brackets vars ++ "," ++ typ) ++ period
-
-
 
 
 genFuncConstraints :: PLC () -- MESSY; TODO: CLEAN UP!
@@ -478,36 +398,26 @@ genFuncConstraints = do
   inst <- gets instCons
 
   case M.lookup rootId m of
-    Nothing -> error $ "u got jamba'd" ++ fName ++ (show rootId) ++ "ALL NODES" ++ show allNodes ++ "map is " ++ show m
+    Nothing -> error $ "u got jamba'd" ++ fName ++ show rootId ++ "ALL NODES" ++ show allNodes ++ "map is " ++ show m
     (Just rootTVar) -> do
-
-
-  -- let (Just rootTVar) =  M.lookup rootId m
-  -- z <- M.lookup <$> (gets currRoot:: PLC NodeID) <*> gets nodeType
-  -- case z of Just rootTVar -> 
-  -- <*> gets nodeType
-  -- let w = ((gets nodeType) :: (PLC (M.Map NodeID TVar)))
       let rhs = intercalate "," (rg ++ inst)
           lhs = fName ++ "_typechecks" ++ parens (intercalate "," $ snd <$>nodes)
           f = lhs ++ providedThat ++ parens rhs ++ period
           nodeCons = concat $ nodeConstraint lhs <$> nodes
           f2 = hasType ++ parens (fName ++ comma ++ rootTVar) ++ providedThat ++ lhs ++ period
           f3 = "isTopLevelDef" ++ parens fName ++ period
-      l <- gets langCons
+      -- l <- gets langCons
       p <- gets progCons
       modify $ \st -> st{progCons = p++f++f2++f3 ++nodeCons}
       pure ()
       where
-        -- dummyRegCons = ["X0 = int", "X1 = X1"]
-        dummyInstCons = []::[String]
         providedThat = ":-"
         period = ".\n"
         comma = " , "
-        parens a = "("++ a ++")"
         hasType = "hasType"
         nodeConstraint :: String -> (NodeID, TVar) -> String
-        nodeConstraint rhs (id, tvar) =
-          hasType ++ parens ("node_"++show id ++ comma ++ tvar) ++ providedThat ++ rhs ++period
+        nodeConstraint rhs (iD, tvar) =
+          hasType ++ parens ("node_"++show iD ++ comma ++ tvar) ++ providedThat ++ rhs ++period
 
 
 
@@ -529,40 +439,40 @@ popBinder nm = do
 
 if binder is already present in current scope, add a new scope layer and add it there. -}
 addLocal :: String -> NodeID -> IsTypeScheme -> PLC ()
-addLocal nm id status = do
+addLocal nm iD status = do
   tables <- gets varInfo
   case tables of
     [] -> do           -- Case I: empty list of tables
-      let tbl = M.fromList [(nm,(id, status))]
+      let tbl = M.fromList [(nm,(iD, status))]
       let tables' = tbl : tables
       modify $ \st -> st{varInfo= tables'}
     (h:tl) -> do       -- Case II: at least one table!
       case M.lookup nm h of
-        (Just v) -> do -- case II.1: name present in current layer, 
+        (Just _) -> do -- case II.1: name present in current layer, 
                        --            so need to add another layer.
-          let tbl = M.fromList [(nm,(id, status))]
+          let tbl = M.fromList [(nm,(iD, status))]
           let tables' = tbl : h : tl
           modify $ \st -> st{varInfo= tables'}
         _ -> do        -- case II.2: nm not present in current layer
-          let h' = M.insert nm (id, status) h
+          let h' = M.insert nm (iD, status) h
           modify $ \st -> st{varInfo = h':tl}
 
 
-{- | Return binder info from shallowest scope.
+-- {- | Return binder info from shallowest scope.
 
- binder is either a local var/func, a built-in func, or a top-level func -}
-lookupByName2 :: String -> PLC (Either (NodeID, IsTypeScheme) String)
-lookupByName2 nm = do
-  -- 1) first, look in local var tables
-  tables <- gets varInfo
-  let searchRes = M.lookup nm (head tables)
-  case searchRes of
-    (Just info) -> pure $ Left info
-  -- 2) next, look in built-in funcs tables
-  -- 3) otherwise, assume the nm refers to a top level function?
-  -- in both 2) and 3), would end up just returning name,
-  -- so let's do that instead of checking the built-in func table.
-    _ -> pure $ Right nm
+--  binder is either a local var/func, a built-in func, or a top-level func -}
+-- lookupByName2 :: String -> PLC (Either (NodeID, IsTypeScheme) String)
+-- lookupByName2 nm = do
+--   -- 1) first, look in local var tables
+--   tables <- gets varInfo
+--   let searchRes = M.lookup nm (head tables)
+--   case searchRes of
+--     (Just info) -> pure $ Left info
+--   -- 2) next, look in built-in funcs tables
+--   -- 3) otherwise, assume the nm refers to a top level function?
+--   -- in both 2) and 3), would end up just returning name,
+--   -- so let's do that instead of checking the built-in func table.
+--     _ -> pure $ Right nm
  
 
 {- | Return binder info from shallowest scope.
@@ -581,20 +491,20 @@ lookupByName nm = do
   -- so let's do that instead of checking the built-in func table.
     _ -> pure $ Right nm
   where lookupLocal :: String -> [M.Map String (NodeID, IsTypeScheme)]-> PLC (Maybe (NodeID, IsTypeScheme))
-        lookupLocal nm tables = do
+        lookupLocal nme tables = do
           case tables of
             [] -> pure Nothing -- base case
             (h:tl) -> do
-              case M.lookup nm h of
+              case M.lookup nme h of
                 (Just info) -> pure $ Just info -- found in layer h!
-                _ -> lookupLocal nm tl          -- recurse on deeper layers tl
+                _ -> lookupLocal nme tl          -- recurse on deeper layers tl
 
 -- | Return a fresh type variable (used by addNode)
 freshTVar :: PLC TVar
 freshTVar = do
-  suff <- gets suff
-  modify $ \st -> st {suff = suff + 1}
-  return ("X" ++ show suff)
+  suf <- gets suff
+  modify $ \st -> st {suff = suf + 1}
+  return ("X" ++ show suf)
 
 -- must be inside some function to generate typing constraints. right??
 checkInsideFunc :: PLC ()
@@ -617,49 +527,50 @@ clearFunctionFields = do
   modify $ \st -> st { varInfo = []
                      , currFunc = ""
                      , currRoot = 7777777
+                     , currNodes = S.empty
                      , regCons = []
                      , instCons = []}
 
 
 
 
-data DummyAST = Node DummyAST DummyAST
- | Leaf
+-- data DummyAST = Node DummyAST DummyAST
+--  | Leaf
 
 
-data DummyProgram = Dummy [(String,DummyAST)]
+-- data DummyProgram = Dummy [(String,DummyAST)]
 
-userAstPass2 :: DummyProgram -> PLC DummyProgram -- NOT WORKING; NEED TO FIX, OR CHANGE ONE BELOW
-userAstPass2 (Dummy []) = pure $ Dummy []        -- TO TEST ADDBUILTINFUNCS
-userAstPass2 (Dummy topDefs) = do
-  --addBuiltInFuncs [("howdy",["int","X","bool"])]
-  let x = mapM_ process topDefs
-  pure $ Dummy topDefs
-  where
-    process h = do
-                    enterFunc "aFunction" 0
-                    _ <- userTopDef (snd h)
-                    exitFunc
+-- userAstPass2 :: DummyProgram -> PLC DummyProgram -- NOT WORKING; NEED TO FIX, OR CHANGE ONE BELOW
+-- userAstPass2 (Dummy []) = pure $ Dummy []        -- TO TEST ADDBUILTINFUNCS
+-- userAstPass2 (Dummy topDefs) = do
+--   --addBuiltInFuncs [("howdy",["int","X","bool"])]
+--   let x = mapM_ process topDefs
+--   pure $ Dummy topDefs
+--   where
+--     process h = do
+--                     enterFunc "aFunction" 0
+--                     _ <- userTopDef (snd h)
+--                     exitFunc
 
-userAstPass :: DummyProgram -> PLC DummyProgram
-userAstPass (Dummy []) = pure $ Dummy []
-userAstPass (Dummy (h:t)) = do
-                    enterFunc "aFunction" 0
-                    _ <- userTopDef (snd h)
-                    exitFunc
-                    userAstPass $ Dummy t
+-- userAstPass :: DummyProgram -> PLC DummyProgram
+-- userAstPass (Dummy []) = pure $ Dummy []
+-- userAstPass (Dummy (h:t)) = do
+--                     enterFunc "aFunction" 0
+--                     _ <- userTopDef (snd h)
+--                     exitFunc
+--                     userAstPass $ Dummy t
 
-userTopDef :: DummyAST -> PLC DummyAST
-userTopDef (Node left right) = do
-  -- do something to modify state!
-  id <- freshNodeId
-  addNode id
-  left' <- userTopDef left
-  right' <- userTopDef right
-  return (Node left' right')
-userTopDef Leaf = do id <- freshNodeId
-                     addNode id
-                     return Leaf
+-- userTopDef :: DummyAST -> PLC DummyAST
+-- userTopDef (Node left right) = do
+--   -- do something to modify state!
+--   id <- freshNodeId
+--   addNode id
+--   left' <- userTopDef left
+--   right' <- userTopDef right
+--   return (Node left' right')
+-- userTopDef Leaf = do id <- freshNodeId
+--                      addNode id
+--                      return Leaf
 
 
 -- main :: IO ()
