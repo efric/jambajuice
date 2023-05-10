@@ -1,0 +1,21 @@
+
+jambatime fact a = {
+    if a == 0 { 1 }
+    else { a * fact (a - 1) }
+}
+
+supFact = {
+    fix \supFact -> \b -> (if b == 0 {1} else {b * supFact (b - 1)})
+}
+
+jambajuice = {
+    //    if t1: T1 -> T1
+    //    then fix t1 : T1
+    //                (int -> int) -> (int -> int)
+    //                   (A -> B)  ==   (C -> D)
+
+    let localFact = fix \localFact -> \b -> (if b == 0 {1} else {b * localFact (b - 1)})  in {
+        localFact 4 + supFact 4 + fact 4
+    }
+    // fix \localFact -> \b -> (if b == 0 {1} else {b * localFact (b - 1)}) :: int -> int
+}

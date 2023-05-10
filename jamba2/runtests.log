@@ -39,6 +39,11 @@ stack run tests/p2.jj > out/p2.out
 diff -b out/p2.out tests/p2.out > out/p2.diff
 ###### SUCCESS
 
+###### Testing p20
+stack run tests/p20.jj > out/p20.out
+diff -b out/p20.out tests/p20.out > out/p20.diff
+###### SUCCESS
+
 ###### Testing p3
 stack run tests/p3.jj > out/p3.out
 diff -b out/p3.out tests/p3.out > out/p3.diff
