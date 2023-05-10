@@ -4,6 +4,7 @@
 use_module(library(apply)).       % to import include
 :- discontiguous hasType/2.       % ignore discontiguous warnings
 :- discontiguous hasTypeScheme/3. % ignore discontiguous warnings
+:- discontiguous isTopLevelDef/1. % ignore discontiguous warningsgit
 :- style_check(-singleton).       % ignore singleton var warnings
 
 % generate a type scheme for a top level definition if possible

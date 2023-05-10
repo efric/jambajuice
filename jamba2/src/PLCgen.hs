@@ -19,7 +19,6 @@ module PLCgen (
   unifyNodeNode,
   unifyNodeType,
   enterApp,
-  getType,
   genFix
 ) where
 
