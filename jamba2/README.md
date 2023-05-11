@@ -12,6 +12,7 @@ To run the regression test suite against all jamba programs in the tests directo
 
 ```
 cd jamba2
+stack build
 ./runtests.sh
 ```
 
