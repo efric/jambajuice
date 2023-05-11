@@ -1,0 +1,22 @@
+/Users/ericfeng/tlc_proj/jamba2/CHANGELOG.md:
+  hash: e72cd32640cc109bbf17134f37bd71ba05a2e6e6d47a28d88552ba28d58099c2
+/Users/ericfeng/tlc_proj/jamba2/README.md:
+  hash: 8bcdb1314f9e89cd763edfd88df20b328c3a3fe8d3d6bb6b9312a5dcbec5ae47
+/Users/ericfeng/tlc_proj/jamba2/jamba2.cabal:
+  hash: 7d2526922672dc2a19b3390fa71da06229d97139c5341914f06ebbc863582fdf
+/Users/ericfeng/tlc_proj/jamba2/src/AST.hs:
+  hash: 290c90364a1af52a13c679f1970d628866e3e962b960ca34e5356b4b84738726
+/Users/ericfeng/tlc_proj/jamba2/src/AnnotatedAST.hs:
+  hash: cc2d6aa6685b228f7f1e29c238823d6cd9430b51e875f8e5e18221a05e09f222
+/Users/ericfeng/tlc_proj/jamba2/src/Eval.hs:
+  hash: add3c735c9dde441dc01cfb314390543a96a43d0422a06e6f61848c80b40c982
+/Users/ericfeng/tlc_proj/jamba2/src/Lexer.hs:
+  hash: 8705461762a5e94c3f45b916f459552a324b86eac3f878c80dc0e809186fe816
+/Users/ericfeng/tlc_proj/jamba2/src/Main.hs:
+  hash: 320682d3b9ee7a658f2bb66c6222d6eee1921d7a0c9eb4549418247b6998da1c
+/Users/ericfeng/tlc_proj/jamba2/src/PLCgen.hs:
+  hash: e3d546a0987664297f5e3b619e90ad88f3843603f3486515702bbb3c241c9e04
+/Users/ericfeng/tlc_proj/jamba2/src/Parser.hs:
+  hash: 0ded4979717a1e19c1422ebfb222be222a36ecaba39eca4254e511b5b5ba4062
+/Users/ericfeng/tlc_proj/jamba2/src/PrologParser.hs:
+  hash: a7654a82b1d3924c8d91cf85e190882dabf92dc2697438e28634fe2c50a9511e
