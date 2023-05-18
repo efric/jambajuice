@@ -11,7 +11,6 @@ import Data.List (foldl')
 import qualified PLCgen as P
 import Control.Monad.State.Lazy
 import AnnotatedAST
-import PrologParser
 
 usage :: String
 usage = "./src/Main tests/examples/p1.jj"
